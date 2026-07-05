@@ -95,6 +95,7 @@ class CognexOrchestrator:
 
     def _setup_schedule(self):
         schedule.every(1).minutes.do(self.decision_cycle)
+        schedule.every(1).minutes.do(lambda: order_executor.monitor_positions(fyers_connector))  # M2 SL monitor
         schedule.every().day.at("03:40").do(self.morning_startup)  # 09:10 IST (UTC+5:30)
         schedule.every().day.at("09:55").do(self.eod_squareoff)   # 15:25 IST (UTC+5:30)
         schedule.every().day.at("03:00").do(self.fyers_daily_reconnect)

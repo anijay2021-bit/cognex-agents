@@ -166,7 +166,7 @@ class RSI2Scanner:
             return None
 
         # Latest completed candle index
-        last_idx   = today_df.index[-1]
+        last_idx   = today_df.index[-2]
         last_rsi   = rsi2[last_idx]
         last_sma   = sma200[last_idx]
         last_close = close[last_idx]
@@ -261,7 +261,7 @@ class RSI2Scanner:
         if len(today_idx) < 2:
             return None
 
-        last_idx   = today_idx[-1]
+        last_idx   = today_idx[-2]
         last_rsi   = rsi2[last_idx]
         last_sma   = sma200[last_idx]
         last_close = close[last_idx]
