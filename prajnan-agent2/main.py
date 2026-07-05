@@ -95,8 +95,8 @@ class CognexOrchestrator:
 
     def _setup_schedule(self):
         schedule.every(1).minutes.do(self.decision_cycle)
-        schedule.every().day.at("09:10").do(self.morning_startup)
-        schedule.every().day.at("15:25").do(self.eod_squareoff)
+        schedule.every().day.at("03:40").do(self.morning_startup)  # 09:10 IST (UTC+5:30)
+        schedule.every().day.at("09:55").do(self.eod_squareoff)   # 15:25 IST (UTC+5:30)
         schedule.every().day.at("03:00").do(self.fyers_daily_reconnect)
         logger.info("Scheduler configured")
 

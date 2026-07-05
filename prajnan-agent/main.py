@@ -276,6 +276,7 @@ class CognexOrchestrator:
 
         # Register the decision cycle job
         schedule.every(settings.decision_cycle_minutes).minutes.do(self.decision_cycle)
+        schedule.every().day.at("09:55").do(self.eod_squareoff)  # 15:25 IST EOD square-off
         logger.info(
             f"\u23f0 Decision cycle scheduled every "
             f"{settings.decision_cycle_minutes} minutes"
@@ -304,6 +305,36 @@ class CognexOrchestrator:
             except Exception as e:
                 logger.error(f"Main loop error: {e}")
                 time.sleep(5)
+
+    def eod_squareoff(self):
+        """Force-close any OPEN positions at end of day (15:25 IST)."""
+        try:
+            from core.database import SessionLocal, Trade as _T
+            from datetime import datetime as _dt
+            _db = SessionLocal()
+            open_trades = _db.query(_T).filter(_T.status == "OPEN").all()
+            if not open_trades:
+                _db.close(); logger.info("EOD square-off: no open positions"); return
+            for _t in open_trades:
+                try:
+                    _q = fyers_connector.get_quotes([_t.symbol])
+                    _xp = _q.get(_t.symbol, {}).get("ltp", 0) or (_t.entry_price or 0)
+                except Exception:
+                    _xp = _t.entry_price or 0
+                _t.exit_price = _xp
+                _t.exit_time = _dt.utcnow()
+                _t.pnl_rs = round((_xp - (_t.entry_price or 0)) * (_t.quantity or 0), 2)
+                _t.status = "CLOSED"
+                _t.reason = "EOD square-off"
+                telegram.send_message(f"EOD Square-Off: {_t.symbol} exit Rs{_xp:.2f} pnl Rs{_t.pnl_rs:.0f}")
+            _db.commit(); _db.close()
+            try:
+                rsi2_scanner.active_signal = None
+            except Exception:
+                pass
+            logger.info(f"EOD square-off closed {len(open_trades)} position(s)")
+        except Exception as _e:
+            logger.error(f"EOD square-off error: {_e}")
 
     def shutdown(self):
         self.running = False
