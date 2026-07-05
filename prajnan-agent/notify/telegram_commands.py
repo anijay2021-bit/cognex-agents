@@ -144,11 +144,15 @@ class SimpleCommandChecker:
         self._send(chat_id, "? Trading Paused.")
 
     def _cmd_resume(self, chat_id):
+        from risk.risk_guard import risk_guard
+        risk_guard.clear_emergency_stop()
         if self.orchestrator: self.orchestrator.paused = False
         self._send(chat_id, "?? Trading Resumed.")
 
     def _cmd_stop(self, chat_id):
-        if self.orchestrator: self.orchestrator.running = False
+        from risk.risk_guard import risk_guard
+        risk_guard.emergency_stop()
+        if self.orchestrator: self.orchestrator.paused = True
         self._send(chat_id, "?? Emergency Stop Triggered.")
 
     def _cmd_settings(self, chat_id):

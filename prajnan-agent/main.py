@@ -290,8 +290,14 @@ class CognexOrchestrator:
             "Account: Kiran (r14592)\n"
             "I am watching the markets!"
         )
+        from risk.risk_guard import risk_guard as _rg
+        if _rg.is_emergency_stopped():
+            self.paused = True
+            logger.critical('EMERGENCY STOP flag present at startup - starting PAUSED')
         while self.running:
             try:
+                if _rg.is_emergency_stopped():
+                    self.paused = True
                 if not self.paused:
                     schedule.run_pending()
                 time.sleep(1)
