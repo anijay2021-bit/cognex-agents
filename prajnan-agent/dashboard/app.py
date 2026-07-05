@@ -215,7 +215,7 @@ def api_dashboard():
 
 def run_dashboard(port=8080):
     logger.info(f"Starting web dashboard on port {port}")
-    app.run(host="0.0.0.0", port=port, debug=False, use_reloader=False)
+    app.run(host="127.0.0.1", port=port, debug=False, use_reloader=False)
 
 
 if __name__ == "__main__":
