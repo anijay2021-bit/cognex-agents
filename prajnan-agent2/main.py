@@ -85,6 +85,7 @@ class CognexOrchestrator:
                 time.sleep(1)
                 if risk_guard.is_emergency_stopped():
                     logger.critical("Emergency stop active")
+                    self.paused = True
             except KeyboardInterrupt:
                 self.shutdown()
                 break
@@ -131,6 +132,16 @@ class CognexOrchestrator:
 
         if self.paused:
             logger.info("Agent paused — skipping cycle")
+            return
+
+        if risk_guard.is_emergency_stopped():
+            logger.critical('EMERGENCY STOP flag present - halting trading')
+            self.paused = True
+            return
+
+        _mh = risk_guard.check_market_hours()
+        if not _mh.passed:
+            logger.info('Skip cycle - ' + _mh.reason)
             return
 
         try:
@@ -191,6 +202,15 @@ class CognexOrchestrator:
                         "strategy_used": "RSI2"
                     }
                     logger.info(f"Placing order: {trade}")
+                    _rc = risk_guard.check_all(
+                        vix=vix,
+                        current_positions=order_executor.position_count,
+                        proposed_margin_rs=ltp * trade['quantity'],
+                        proposed_max_loss_rs=(ltp - trade['stop_loss']) * trade['quantity'],
+                    )
+                    if not _rc.passed:
+                        logger.warning('RISK BLOCK - ' + _rc.reason + ' - skipped')
+                        continue
                     order_executor.execute(trade)
                 elif signal.get("action") == "EXIT":
                     logger.info(f"EXIT signal: {signal}")
