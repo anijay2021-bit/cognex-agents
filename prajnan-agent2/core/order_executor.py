@@ -251,7 +251,7 @@ class OrderExecutor:
                 trade.exit_price = exit_price
                 trade.pnl_rs     = pnl
                 trade.status     = "CLOSED"
-                trade.exit_time  = _now_ist()
+                trade.exit_time  = datetime.utcnow()
                 db.commit()
             db.close()
 

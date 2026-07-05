@@ -16,7 +16,32 @@ async def lifespan(app):
     yield
 
 app = FastAPI(title="COGNEX Dashboard", version="2.1.0", lifespan=lifespan)
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
+app.add_middleware(CORSMiddleware, allow_origins=["http://localhost:8000","http://127.0.0.1:8000"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
+
+import base64, secrets as _secrets
+_DASH_USER = os.environ.get("DASH_USER", "")
+_DASH_PASS = os.environ.get("DASH_PASS", "")
+
+@app.middleware("http")
+async def _basic_auth(request, call_next):
+    # Auth active only when BOTH env vars are set (dashboard is localhost-only)
+    if not _DASH_USER or not _DASH_PASS:
+        return await call_next(request)
+    p = request.url.path
+    if p == "/api/health" or p.startswith("/ws"):
+        return await call_next(request)
+    hdr = request.headers.get("authorization", "")
+    ok = False
+    if hdr.startswith("Basic "):
+        try:
+            u, _, pw = base64.b64decode(hdr[6:]).decode().partition(":")
+            ok = _secrets.compare_digest(u, _DASH_USER) and _secrets.compare_digest(pw, _DASH_PASS)
+        except Exception:
+            ok = False
+    if not ok:
+        from starlette.responses import Response
+        return Response(status_code=401, headers={"WWW-Authenticate": "Basic realm=COGNEX"})
+    return await call_next(request)
 app.include_router(ws_router)
 app.include_router(agents_router, prefix="/api/agents", tags=["Agents"])
 app.include_router(trades_router, prefix="/api/data",   tags=["Data"])
