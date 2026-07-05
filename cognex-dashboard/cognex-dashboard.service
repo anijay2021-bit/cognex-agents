@@ -1,0 +1,18 @@
+[Unit]
+Description=COGNEX Dashboard — Monitoring API
+After=network.target prajnan-agent.service
+
+[Service]
+Type=simple
+User=anijay2021
+WorkingDirectory=/home/anijay2021/cognex-dashboard
+ExecStart=/home/anijay2021/cognex-dashboard/venv/bin/uvicorn main:app --host 0.0.0.0 --port 8000
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=cognex-dashboard
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=multi-user.target

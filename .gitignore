@@ -1,0 +1,14 @@
+**/venv/
+**/__pycache__/
+**/*.pyc
+**/.env
+.env
+**/config/.env
+**/config/fyers_token.json
+**/config/telegram_config.json
+**/config/calendar_state.json
+**/*.db
+**/logs/
+**/*.log
+**/*.bak
+**/*.save
