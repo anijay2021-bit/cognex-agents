@@ -134,13 +134,41 @@ class RSI2Scanner:
     def _get_atm_strike(self, spot: float) -> int:
         return int(round(spot / 50) * 50)
 
+    def _fetch_daily_candles(self):
+        try:
+            today = date.today()
+            from_date = (today - timedelta(days=400)).strftime("%Y-%m-%d")
+            data = {"symbol": "NSE:NIFTY50-INDEX", "resolution": "D", "date_format": "1",
+                    "range_from": from_date, "range_to": today.strftime("%Y-%m-%d"), "cont_flag": "1"}
+            response = self.fyers.history(data=data)
+            if response.get("s") != "ok":
+                return None
+            candles = response.get("candles", [])
+            if not candles:
+                return None
+            return pd.DataFrame(candles, columns=["timestamp","open","high","low","close","volume"])
+        except Exception as e:
+            logger.error(f"RSI2 daily fetch error: {e}")
+            return None
+
+    def _get_sma200_daily(self):
+        today = date.today()
+        if getattr(self, "_sma200_date", None) == today and getattr(self, "_sma200_cache", None) is not None:
+            return self._sma200_cache
+        dfx = self._fetch_daily_candles()
+        if dfx is None or len(dfx) < SMA_PERIOD:
+            logger.warning("RSI2: not enough daily candles for SMA200")
+            return None
+        sma = dfx["close"].astype(float).rolling(SMA_PERIOD).mean().iloc[-1]
+        self._sma200_cache = round(float(sma), 2)
+        self._sma200_date = today
+        logger.info(f"RSI2 daily SMA200 refreshed: {self._sma200_cache}")
+        return self._sma200_cache
+
     def _build_option_symbol(self, strike: int, option_type: str) -> str:
-        dates   = get_expiry_dates()
-        monthly = dates["monthly_str"]
-        exp     = datetime.strptime(monthly, "%d-%b-%Y")
-        year    = exp.strftime("%y")
-        month   = exp.strftime("%b").upper()
-        return f"NSE:NIFTY{year}{month}{strike}{option_type}"
+        from strategies.options_selector import build_fyers_option_symbol
+        weekly = get_expiry_dates()["weekly"]
+        return build_fyers_option_symbol(weekly, strike, option_type)
 
     def scan(self, nifty_spot: float) -> Optional[dict]:
         """
@@ -156,7 +184,7 @@ class RSI2Scanner:
             return None
 
         close  = df["close"].values.astype(float)
-        sma200 = self._calculate_sma200(close)
+        sma200_daily = self._get_sma200_daily()
         rsi2   = self._calculate_rsi2(close)
 
         # Get today's candles
@@ -166,13 +194,13 @@ class RSI2Scanner:
             return None
 
         # Latest completed candle index
-        last_idx   = today_df.index[-1]
+        last_idx   = today_df.index[-2]
         last_rsi   = rsi2[last_idx]
-        last_sma   = sma200[last_idx]
+        last_sma   = sma200_daily
         last_close = close[last_idx]
         last_time  = df.iloc[last_idx]["timestamp"]
 
-        if np.isnan(last_rsi) or np.isnan(last_sma):
+        if last_sma is None or np.isnan(last_rsi):
             logger.debug(f"RSI2: NaN values — RSI:{last_rsi} SMA:{last_sma}")
             return None
 
@@ -196,7 +224,7 @@ class RSI2Scanner:
                 "symbol":      symbol,
                 "strike":      atm,
                 "option_type": "CE",
-                "expiry":      get_expiry_dates()["monthly_str"],
+                "expiry":      get_expiry_dates()["weekly_str"],
                 "direction":   "BUY",
                 "quantity":    RSI2_QUANTITY,
                 "strategy":    "RSI2",
@@ -222,7 +250,7 @@ class RSI2Scanner:
                 "symbol":      symbol,
                 "strike":      atm,
                 "option_type": "PE",
-                "expiry":      get_expiry_dates()["monthly_str"],
+                "expiry":      get_expiry_dates()["weekly_str"],
                 "direction":   "BUY",
                 "quantity":    RSI2_QUANTITY,
                 "strategy":    "RSI2",
@@ -254,19 +282,19 @@ class RSI2Scanner:
             return None
 
         close  = df["close"].values.astype(float)
-        sma200 = self._calculate_sma200(close)
+        sma200_daily = self._get_sma200_daily()
         rsi2   = self._calculate_rsi2(close)
 
         today_idx = df[df["timestamp"].dt.date == date.today()].index
         if len(today_idx) < 2:
             return None
 
-        last_idx   = today_idx[-1]
+        last_idx   = today_idx[-2]
         last_rsi   = rsi2[last_idx]
-        last_sma   = sma200[last_idx]
+        last_sma   = sma200_daily
         last_close = close[last_idx]
 
-        if np.isnan(last_rsi) or np.isnan(last_sma):
+        if last_sma is None or np.isnan(last_rsi):
             return None
 
         option_type = position.get("option_type", "CE")

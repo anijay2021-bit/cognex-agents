@@ -191,8 +191,8 @@ class EmaObvScanner:
             df["ema21"] = self._calc_ema(df["close"], EMA_SLOW)
             df["obv"]   = self._calc_obv(df)
 
-            curr         = df.iloc[-1]
-            prev         = df.iloc[-2]
+            curr         = df.iloc[-2]
+            prev         = df.iloc[-3]
             ema9_curr    = round(float(curr["ema9"]), 2)
             ema21_curr   = round(float(curr["ema21"]), 2)
             ema9_prev    = round(float(prev["ema9"]), 2)

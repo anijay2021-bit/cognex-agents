@@ -85,6 +85,7 @@ class CognexOrchestrator:
                 time.sleep(1)
                 if risk_guard.is_emergency_stopped():
                     logger.critical("Emergency stop active")
+                    self.paused = True
             except KeyboardInterrupt:
                 self.shutdown()
                 break
@@ -94,8 +95,9 @@ class CognexOrchestrator:
 
     def _setup_schedule(self):
         schedule.every(1).minutes.do(self.decision_cycle)
-        schedule.every().day.at("09:10").do(self.morning_startup)
-        schedule.every().day.at("15:25").do(self.eod_squareoff)
+        schedule.every(1).minutes.do(lambda: order_executor.monitor_positions(fyers_connector))  # M2 SL monitor
+        schedule.every().day.at("03:40").do(self.morning_startup)  # 09:10 IST (UTC+5:30)
+        schedule.every().day.at("09:55").do(self.eod_squareoff)   # 15:25 IST (UTC+5:30)
         schedule.every().day.at("03:00").do(self.fyers_daily_reconnect)
         logger.info("Scheduler configured")
 
@@ -131,6 +133,16 @@ class CognexOrchestrator:
 
         if self.paused:
             logger.info("Agent paused — skipping cycle")
+            return
+
+        if risk_guard.is_emergency_stopped():
+            logger.critical('EMERGENCY STOP flag present - halting trading')
+            self.paused = True
+            return
+
+        _mh = risk_guard.check_market_hours()
+        if not _mh.passed:
+            logger.info('Skip cycle - ' + _mh.reason)
             return
 
         try:
@@ -191,6 +203,15 @@ class CognexOrchestrator:
                         "strategy_used": "RSI2"
                     }
                     logger.info(f"Placing order: {trade}")
+                    _rc = risk_guard.check_all(
+                        vix=vix,
+                        current_positions=order_executor.position_count,
+                        proposed_margin_rs=ltp * trade['quantity'],
+                        proposed_max_loss_rs=(ltp - trade['stop_loss']) * trade['quantity'],
+                    )
+                    if not _rc.passed:
+                        logger.warning('RISK BLOCK - ' + _rc.reason + ' - skipped')
+                        continue
                     order_executor.execute(trade)
                 elif signal.get("action") == "EXIT":
                     logger.info(f"EXIT signal: {signal}")

@@ -102,7 +102,7 @@ class RSI2Scanner:
                 return None
 
             df["rsi2"] = self._calc_rsi2(df["close"])
-            latest     = df.iloc[-1]
+            latest     = df.iloc[-2]
             rsi2_val   = round(float(latest["rsi2"]), 2)
             close      = round(float(latest["close"]), 2)
             candle_time = latest["timestamp"].strftime("%H:%M") \
