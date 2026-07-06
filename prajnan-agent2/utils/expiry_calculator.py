@@ -19,8 +19,6 @@ def get_weekly_expiry(reference_date: date = None) -> date:
         reference_date = date.today()
     days_to_tuesday = (1 - reference_date.weekday()) % 7
     tuesday = reference_date + timedelta(days=days_to_tuesday)
-    if reference_date.weekday() > 1:
-        tuesday = tuesday + timedelta(days=7)
     while not is_trading_day(tuesday):
         tuesday = tuesday - timedelta(days=1)
     return tuesday
