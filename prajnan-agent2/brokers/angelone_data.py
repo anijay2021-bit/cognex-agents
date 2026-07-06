@@ -22,7 +22,7 @@ from config.settings import settings
 NIFTY_SYMBOL   = "Nifty 50"
 NIFTY_TOKEN    = "99926000"
 NIFTY_EXCHANGE = "NSE"
-INDIAVIX_TOKEN = "99919003"
+INDIAVIX_TOKEN = "99926017"
 
 class AngelOneDataConnector:
 
@@ -143,13 +143,17 @@ class AngelOneDataConnector:
     def get_vix(self) -> float:
         self._ensure_connected()
         try:
-            return 15.0  # VIX token unsupported — using default
+            data = self.api.ltpData(NIFTY_EXCHANGE, "India VIX", INDIAVIX_TOKEN)
             if data.get("status"):
-                return float(data["data"].get("ltp", 0))
-            return 0.0
+                ltp = float(data["data"].get("ltp", 0) or 0)
+                if ltp > 0:
+                    return ltp
+                logger.warning("get_vix: ltp<=0 from feed")
+            else:
+                logger.warning(f"get_vix failed: {data.get('message')}")
         except Exception as e:
             logger.error(f"get_vix error: {e}")
-            return 0.0
+        return 15.0  # safe neutral fallback if VIX feed unavailable
 
     def get_full_market_snapshot(self) -> dict:
         nifty = self.get_nifty_spot()
