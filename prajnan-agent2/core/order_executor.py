@@ -43,6 +43,8 @@ class OrderExecutor:
                     "entry_time": t.entry_time,
                     "strategy":   t.strategy_used or "RSI2",
                     "option_type": t.instrument_type or "",
+                    "angel_symbol": None,
+                    "angel_token": None,
                 }
             if open_trades:
                 logger.info(f"Reloaded {len(open_trades)} open position(s) from DB: "
@@ -68,6 +70,8 @@ class OrderExecutor:
         reasoning   = trade.get("reasoning", "")
         timeframe   = trade.get("timeframe", 1)
         expiry      = trade.get("expiry", "")
+        angel_symbol = None
+        token = None
 
         # Check if already in this position
         if symbol in self.open_positions:
@@ -94,9 +98,23 @@ class OrderExecutor:
             }
         else:
             # Get AngelOne symbol token
-            token = self._get_symbol_token(symbol)
+            from brokers.angel_symbols import resolve as _resolve_angel
+            from datetime import datetime as _dt2
+            _exp = expiry
+            if isinstance(_exp, str) and _exp:
+                try:
+                    _exp = _dt2.strptime(_exp, "%Y-%m-%d").date()
+                except Exception:
+                    _exp = None
+            angel_symbol, token = (None, None)
+            if _exp is not None:
+                angel_symbol, token = _resolve_angel(strike, _exp, option_type)
+            if not token:
+                logger.error("LIVE entry aborted: no AngelOne token " + str(strike) + str(option_type))
+                telegram.send_message("LIVE entry aborted: no AngelOne token " + str(strike) + str(option_type))
+                return False
             order_result = angelone_connector.place_order(
-                symbol     = symbol,
+                symbol     = angel_symbol,
                 token      = token,
                 qty        = quantity,
                 side       = "BUY",
@@ -133,6 +151,8 @@ class OrderExecutor:
             "entry_time":  datetime.now(),
             "strategy":    trade.get("strategy", "RSI2"),
             "option_type": option_type,
+            "angel_symbol": angel_symbol,
+            "angel_token": token,
         }
 
         # Send Telegram alert
@@ -232,9 +252,14 @@ class OrderExecutor:
 
             # Place exit order
             if not settings.is_paper_mode:
-                token = self._get_symbol_token(symbol)
+                angel_symbol = pos.get("angel_symbol")
+                token = pos.get("angel_token")
+                if not token:
+                    logger.error("LIVE exit: no stored AngelOne token for " + str(symbol) + " - square off manually")
+                    telegram.send_message("MANUAL EXIT NEEDED: " + str(symbol) + " - no broker token to auto-square-off")
+                    return
                 angelone_connector.place_order(
-                    symbol     = symbol,
+                    symbol     = angel_symbol,
                     token      = token,
                     qty        = qty,
                     side       = "SELL",
