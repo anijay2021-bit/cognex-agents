@@ -27,6 +27,8 @@ class Settings(BaseSettings):
     vix_ceiling: float = Field(default=20.0)
     max_loss_per_trade_rs: float = Field(default=2000.0)
     trading_mode: Literal["PAPER", "LIVE"] = Field(default="PAPER")
+    rsi2_lots: int = Field(default=10)
+    ema_lots: int = Field(default=10)
     decision_cycle_minutes: int = Field(default=15)
     news_scan_minutes: int = Field(default=10)
     timezone: str = Field(default="Asia/Kolkata")

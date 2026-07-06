@@ -26,7 +26,7 @@ from config.settings import settings
 from utils.expiry_calculator import get_monthly_expiry, get_expiry_dates
 
 NIFTY_LOT_SIZE   = 65
-EMA_LOTS         = 10
+EMA_LOTS         = settings.ema_lots
 EMA_QUANTITY     = NIFTY_LOT_SIZE * EMA_LOTS   # 650
 EMA_FAST         = 9
 EMA_SLOW         = 21

@@ -22,7 +22,7 @@ from config.settings import settings
 from utils.expiry_calculator import get_expiry_dates
 
 NIFTY_LOT_SIZE   = 65
-RSI2_LOTS        = 10
+RSI2_LOTS        = settings.rsi2_lots
 RSI2_QUANTITY    = NIFTY_LOT_SIZE * RSI2_LOTS  # 650
 RSI_PERIOD       = 2
 SMA_PERIOD       = 200
