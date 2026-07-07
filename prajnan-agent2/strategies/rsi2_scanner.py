@@ -190,6 +190,33 @@ class RSI2Scanner:
             return exit_signal
         return None
 
+    def should_exit(self, pos: dict, spot: float):
+        """Return an exit-reason string if this open position should close, else None.
+        Called by order_executor.monitor_positions() every minute (C4 fix)."""
+        try:
+            opt = (pos.get("option_type") or pos.get("direction") or "").upper()
+            if opt not in ("CE", "PE"):
+                return None
+            sma200 = self._get_sma200_daily()
+            if sma200 is None:
+                return None
+            df = self._get_candles_cached()
+            if df is None or len(df) < 10:
+                return None
+            df = df.copy()
+            df["rsi2"] = self._calc_rsi2(df["close"])
+            rsi2_val = round(float(df.iloc[-2]["rsi2"]), 2)
+            if opt == "CE" and (rsi2_val > RSI_OVERBOUGHT or spot < sma200):
+                return (f"RSI2={rsi2_val}>{RSI_OVERBOUGHT}"
+                        if rsi2_val > RSI_OVERBOUGHT else f"Spot {spot}<SMA200 {sma200}")
+            if opt == "PE" and (rsi2_val < RSI_OVERSOLD or spot > sma200):
+                return (f"RSI2={rsi2_val}<{RSI_OVERSOLD}"
+                        if rsi2_val < RSI_OVERSOLD else f"Spot {spot}>SMA200 {sma200}")
+            return None
+        except Exception as e:
+            logger.error(f"should_exit error: {e}")
+            return None
+
     def reset(self):
         self.active_signal = None
         self._cached_df    = None

@@ -96,12 +96,16 @@ class RiskGuard:
 
     def _get_today_pnl(self):
         try:
-            from core.database import SessionLocal, DailyPnL
+            from core.database import SessionLocal, Trade
+            from datetime import datetime as _dt
             db = SessionLocal()
-            today = str(date.today())
-            record = db.query(DailyPnL).filter(DailyPnL.date == today).first()
+            start = _dt.combine(date.today(), _dt.min.time())
+            trades = db.query(Trade).filter(
+                Trade.status == "CLOSED",
+                Trade.exit_time >= start,
+            ).all()
             db.close()
-            return record.net_pnl_rs if record else 0.0
+            return float(sum((t.pnl_rs or 0.0) for t in trades))
         except Exception as e:
             logger.error(f"Could not fetch today PnL: {e}")
             return 0.0

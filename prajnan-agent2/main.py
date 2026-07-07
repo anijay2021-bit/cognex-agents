@@ -215,6 +215,9 @@ class CognexOrchestrator:
                     order_executor.execute(trade)
                 elif signal.get("action") == "EXIT":
                     logger.info(f"EXIT signal: {signal}")
+                    # Act on it: re-run the authoritative exit engine, which now
+                    # evaluates rsi2_scanner.should_exit() for every open position.
+                    order_executor.monitor_positions(fyers_connector)
 
         except Exception as e:
             logger.error(f"Decision cycle error: {e}")
