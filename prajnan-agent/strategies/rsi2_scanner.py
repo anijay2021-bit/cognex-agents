@@ -137,7 +137,7 @@ class RSI2Scanner:
     def _fetch_daily_candles(self):
         try:
             today = date.today()
-            from_date = (today - timedelta(days=400)).strftime("%Y-%m-%d")
+            from_date = (today - timedelta(days=360)).strftime("%Y-%m-%d")
             data = {"symbol": "NSE:NIFTY50-INDEX", "resolution": "D", "date_format": "1",
                     "range_from": from_date, "range_to": today.strftime("%Y-%m-%d"), "cont_flag": "1"}
             response = self.fyers.history(data=data)
