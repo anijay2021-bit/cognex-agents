@@ -147,6 +147,20 @@ class OrderExecutor:
 
         order_id = order_result.get("orderid", "")
 
+        # Confirm the entry actually filled (LIVE): real price, abort on reject, track+alert if ambiguous
+        if not settings.is_paper_mode:
+            _f = self._confirm_fill(order_id)
+            if _f["status"] in ("rejected", "cancelled"):
+                logger.error(f"Entry {order_id} {_f['status']} — not tracking {symbol}")
+                telegram.send_message(f"❌ <b>Entry {_f['status'].upper()}</b>\n{symbol}\nID: {order_id}")
+                return False
+            if _f["status"] == "complete" and _f["avg_price"] > 0:
+                entry_price = _f["avg_price"]
+                logger.info(f"Entry fill confirmed {symbol} @ Rs{entry_price:.2f}")
+            else:
+                logger.warning(f"Entry {order_id} not confirmed (status={_f['status']}) — tracking; SL will monitor")
+                telegram.send_message(f"⚠️ <b>Entry fill unconfirmed</b>\n{symbol} ID {order_id}\nSL will monitor; verify manually")
+
         # Save to database
         trade_id = self._save_trade(
             symbol, strike, option_type, expiry,
@@ -254,6 +268,28 @@ class OrderExecutor:
             except Exception as e:
                 logger.error(f"Monitor error {symbol}: {e}")
 
+    def _confirm_fill(self, order_id, retries=6, delay=1.0):
+        """Poll the broker order book to classify a fill.
+        Returns {status: complete|rejected|cancelled|pending|unknown, avg_price, filled_qty}."""
+        import time as _t
+        result = {"status": "unknown", "avg_price": 0.0, "filled_qty": 0}
+        if not order_id:
+            return result
+        for _ in range(retries):
+            st = angelone_connector.get_order_status(order_id)
+            s = (st.get("status") or "").lower()
+            if "complete" in s or "executed" in s or "traded" in s:
+                return {"status": "complete", "avg_price": st.get("avg_price", 0.0), "filled_qty": st.get("filled_qty", 0)}
+            if "reject" in s:
+                return {"status": "rejected", "avg_price": 0.0, "filled_qty": 0}
+            if "cancel" in s:
+                return {"status": "cancelled", "avg_price": 0.0, "filled_qty": 0}
+            result["status"] = s or "pending"
+            _t.sleep(delay)
+        if result["status"] in ("", "unknown", "not_found"):
+            result["status"] = "pending"
+        return result
+
     def _option_ltp(self, symbol, pos, fyers_connector=None):
         """Current option LTP: Fyers first, AngelOne fallback. Returns 0.0 if both fail."""
         try:
@@ -318,7 +354,7 @@ class OrderExecutor:
                     logger.error("LIVE exit: no stored AngelOne token for " + str(symbol) + " - square off manually")
                     telegram.send_message("MANUAL EXIT NEEDED: " + str(symbol) + " - no broker token to auto-square-off")
                     return
-                angelone_connector.place_order(
+                _res = angelone_connector.place_order(
                     symbol     = angel_symbol,
                     token      = token,
                     qty        = qty,
@@ -326,6 +362,20 @@ class OrderExecutor:
                     order_type = "MARKET",
                     product    = "INTRADAY"
                 )
+                if not _res.get("status"):
+                    logger.critical(f"EXIT SELL not accepted for {symbol}: {_res.get('message')}")
+                    telegram.send_message(f"🚨 <b>EXIT FAILED</b>\n{symbol}\nBroker rejected order — CLOSE MANUALLY")
+                    return
+                _ef = self._confirm_fill(_res.get("orderid", ""))
+                if _ef["status"] in ("rejected", "cancelled"):
+                    logger.critical(f"EXIT SELL {_ef['status']} for {symbol}")
+                    telegram.send_message(f"🚨 <b>EXIT {_ef['status'].upper()}</b>\n{symbol}\nCLOSE MANUALLY")
+                    return
+                if _ef["status"] == "complete" and _ef["avg_price"] > 0:
+                    exit_price = _ef["avg_price"]
+                    pnl = (exit_price - entry) * qty
+                elif _ef["status"] not in ("complete",):
+                    telegram.send_message(f"⚠️ <b>Exit fill unconfirmed</b>\n{symbol} — verify it squared off")
 
             # Update database
             db = SessionLocal()

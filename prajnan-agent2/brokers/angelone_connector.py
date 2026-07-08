@@ -98,6 +98,30 @@ class AngelOneConnector:
             logger.error(f"Positions error: {e}")
             return []
 
+    def get_order_status(self, order_id: str) -> dict:
+        """Look up an order in the order book. Returns {status, avg_price, filled_qty}."""
+        if not self._connected or not order_id:
+            return {"status": "unknown", "avg_price": 0.0, "filled_qty": 0}
+        try:
+            book = self.api.orderBook()
+            rows = (book.get("data") or []) if isinstance(book, dict) else []
+            for row in rows:
+                if str(row.get("orderid")) == str(order_id):
+                    st = str(row.get("orderstatus") or row.get("status") or "").lower()
+                    try:
+                        avg = float(row.get("averageprice") or 0)
+                    except Exception:
+                        avg = 0.0
+                    try:
+                        filled = int(float(row.get("filledshares") or 0))
+                    except Exception:
+                        filled = 0
+                    return {"status": st, "avg_price": avg, "filled_qty": filled}
+            return {"status": "not_found", "avg_price": 0.0, "filled_qty": 0}
+        except Exception as e:
+            logger.error(f"Order status error: {e}")
+            return {"status": "error", "avg_price": 0.0, "filled_qty": 0}
+
     def get_ltp(self, exchange: str, symbol: str, token: str) -> float:
         if not self._connected:
             return 0.0
