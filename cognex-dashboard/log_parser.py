@@ -10,7 +10,7 @@ display live signal panels (RSI2 value, EMA values, Nifty spot, etc.)
 """
 
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Optional
 
 # ─── Base parser ─────────────────────────────────────────────────────────────
@@ -34,6 +34,11 @@ def parse_line(raw: str, agent_id: str) -> Optional[dict]:
         return None
 
     ts_str, level, location, message = m.groups()
+    try:
+        _u = datetime.strptime(ts_str[:19], "%Y-%m-%d %H:%M:%S")
+        ts_str = (_u + timedelta(hours=5, minutes=30)).strftime("%Y-%m-%d %H:%M:%S") + ts_str[19:]
+    except Exception:
+        pass
     module = location.split(":")[0]
 
     base = {
@@ -60,7 +65,7 @@ def parse_line(raw: str, agent_id: str) -> Optional[dict]:
                 "strategy": "RSI2",
                 "spot":     float(m2.group(1)),
                 "sma200":   float(m2.group(2)),
-                "bar_time": m2.group(3),
+                "bar_time": m2.group(3) or "",
             }
             base["event"] = "rsi2_check"
 
@@ -85,7 +90,7 @@ def parse_line(raw: str, agent_id: str) -> Optional[dict]:
 
         # "EMA+OBV | EMA9:23240.46 EMA21:23256.37 Time:09:45"
         m2 = re.search(
-            r'EMA9:([\d.]+).*?EMA21:([\d.]+).*?Time:(\d+:\d+)',
+            r'EMA9:([\d.]+).*?EMA21:([\d.]+)(?:.*?Time:(\d+:\d+))?',
             message
         )
         if m2:
@@ -94,7 +99,7 @@ def parse_line(raw: str, agent_id: str) -> Optional[dict]:
                 "strategy": "EMA_OBV",
                 "ema9":     ema9,
                 "ema21":    ema21,
-                "bar_time": m2.group(3),
+                "bar_time": m2.group(3) or "",
                 "crossover": ema9 > ema21,
             }
             base["event"] = "ema_check"
