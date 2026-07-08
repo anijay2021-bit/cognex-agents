@@ -23,7 +23,7 @@ TOKEN_PATHS = [
     f"{BASE}/prajnan-agent/config/fyers_token.txt",
 ]
 
-SYMBOLS = "NSE:NIFTY50-INDEX,NSE:NIFTYBANK-INDEX,NSE:INDIA VIX"
+SYMBOLS = "NSE:NIFTY50-INDEX,NSE:NIFTYBANK-INDEX,NSE:INDIAVIX-INDEX"
 QUOTES_URL = "https://api-t1.fyers.in/data/quotes"
 POLL_INTERVAL = 5  # seconds
 

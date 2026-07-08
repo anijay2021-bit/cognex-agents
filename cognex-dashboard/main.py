@@ -24,12 +24,17 @@ _DASH_PASS = os.environ.get("DASH_PASS", "")
 
 @app.middleware("http")
 async def _basic_auth(request, call_next):
-    # Auth active only when BOTH env vars are set (dashboard is localhost-only)
-    if not _DASH_USER or not _DASH_PASS:
-        return await call_next(request)
+    # FAIL-CLOSED: this dashboard can toggle LIVE trading and edit strategy code,
+    # so it must NEVER serve control endpoints without configured credentials.
     p = request.url.path
     if p == "/api/health" or p.startswith("/ws"):
         return await call_next(request)
+    if not _DASH_USER or not _DASH_PASS:
+        from starlette.responses import JSONResponse
+        return JSONResponse(
+            status_code=503,
+            content={"detail": "Dashboard auth not configured. Set DASH_USER and DASH_PASS."},
+        )
     hdr = request.headers.get("authorization", "")
     ok = False
     if hdr.startswith("Basic "):
