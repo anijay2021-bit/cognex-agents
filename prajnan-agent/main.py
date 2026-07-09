@@ -145,6 +145,7 @@ class CognexOrchestrator:
                                 logger.warning(f"LTP fetch returned 0 for {sig['symbol']}")
                         except Exception as _ltp_e:
                             logger.warning(f"Could not fetch LTP for {sig['symbol']}: {_ltp_e}")
+                    sig["entry_price"] = ep   # persist fetched LTP so the trade records and the one-trade gate engages
                     ep_str=f"Rs {ep:.2f}" if ep else "N/A"
                     strategy_used=sig.get("strategy_used","RSI2")
                     if strategy_used=="EMA_OBV":
