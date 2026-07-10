@@ -1,0 +1,18 @@
+[Unit]
+Description=Nitin Agent - Swing Trading (Fyers data, PAPER)
+After=network.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=anijay2021
+WorkingDirectory=/home/anijay2021/nitin-agent
+ExecStart=/home/anijay2021/nitin-agent/venv/bin/python3 main.py
+Restart=always
+RestartSec=30
+StandardOutput=append:/home/anijay2021/nitin-agent/logs/nitin.log
+StandardError=append:/home/anijay2021/nitin-agent/logs/nitin.log
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=multi-user.target

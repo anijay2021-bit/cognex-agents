@@ -39,6 +39,16 @@ AGENTS = {
         "broker_data":  "Fyers",
         "broker_exec":  "AngelOne",
     },
+    "nitin": {
+        "display_name": "Nitin Agent",
+        "account":      "Kiran - r14592",
+        "service":      "nitin-agent",
+        "db":           f"{BASE}/nitin-agent/cognex_agent.db",
+        "log":          f"{BASE}/nitin-agent/logs/nitin.log",
+        "strategies":   ["Nitin Swing (Flag/Base/DTL/VCP)"],
+        "broker_data":  "Fyers",
+        "broker_exec":  "Paper",
+    },
 }
 
 FYERS_TOKEN_PATH   = f"{BASE}/prajnan-agent/config/fyers_token.json"
