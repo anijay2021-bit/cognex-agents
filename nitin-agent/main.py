@@ -44,16 +44,25 @@ def fyers():
 
 
 def history(fy, symbol, days=420):
-    to_d = dt.date.today()
-    frm = to_d - dt.timedelta(days=int(days * 1.6))
-    r = fy.history({"symbol": symbol, "resolution": "D", "date_format": "1",
-                    "range_from": frm.isoformat(), "range_to": to_d.isoformat(),
-                    "cont_flag": "1"})
-    if r.get("s") != "ok":
-        raise RuntimeError(f"history {symbol}: {r.get('message', r.get('s'))}")
-    df = pd.DataFrame(r["candles"], columns=["ts", "open", "high", "low", "close", "volume"])
+    """Daily candles; Fyers caps ranges at ~366 days, so fetch in windows."""
+    frames, end = [], dt.date.today()
+    remaining = int(days * 1.6)
+    while remaining > 0:
+        span = min(350, remaining)
+        start = end - dt.timedelta(days=span)
+        r = fy.history({"symbol": symbol, "resolution": "D", "date_format": "1",
+                        "range_from": start.isoformat(), "range_to": end.isoformat(),
+                        "cont_flag": "1"})
+        if r.get("s") != "ok":
+            raise RuntimeError(f"history {symbol}: {r.get('message', r.get('s'))}")
+        if r.get("candles"):
+            frames.append(pd.DataFrame(r["candles"],
+                columns=["ts", "open", "high", "low", "close", "volume"]))
+        end = start - dt.timedelta(days=1)
+        remaining -= span + 1
+        time.sleep(0.35)
+    df = pd.concat(frames).drop_duplicates("ts")
     df["date"] = pd.to_datetime(df["ts"], unit="s")
-    time.sleep(0.4)
     return df.set_index("date").drop(columns="ts").sort_index()
 
 
