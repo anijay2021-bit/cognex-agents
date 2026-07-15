@@ -1,0 +1,13 @@
+[Unit]
+Description=Pocket Pivot Agent - Chartink scan to Telegram (PAPER)
+After=network-online.target
+
+[Service]
+User=anijay2021
+WorkingDirectory=/home/anijay2021/pocket-pivot-agent
+ExecStart=/home/anijay2021/pocket-pivot-agent/runner.sh
+Restart=always
+RestartSec=30
+
+[Install]
+WantedBy=multi-user.target

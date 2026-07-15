@@ -49,6 +49,16 @@ AGENTS = {
         "broker_data":  "Fyers",
         "broker_exec":  "Paper",
     },
+    "pocketpivot": {
+        "display_name": "Pocket Pivot",
+        "account":      "Kiran - alerts only",
+        "service":      "pocket-pivot-agent",
+        "db":           None,
+        "log":          f"{BASE}/pocket-pivot-agent/logs/pocket_pivot.log",
+        "strategies":   ["Pocket Pivot (Chartink scan -> Telegram)"],
+        "broker_data":  "Chartink",
+        "broker_exec":  "Alerts",
+    },
 }
 
 FYERS_TOKEN_PATH   = f"{BASE}/prajnan-agent/config/fyers_token.json"

@@ -13,6 +13,7 @@ Algorithmic trading agents for NSE (Nifty options + equity swing), deployed on a
 | Prajnan2 | `prajnan-agent2` | Father (AngelOne only) | RSI2 weekly ATM options | LIVE |
 | Nitin | `nitin-agent` | Kiran (Fyers data) | Swing setups: flag, base-ONP-pullback, DTL breakout, VCP | PAPER |
 | Trishul | `trishul-agent` | Kiran (Fyers data + AngelOne) | Mean reversion scanner (SMA10 stretch + RSI2) | PAPER (service disabled) |
+| Pocket Pivot | `pocket-pivot-agent` | Kiran (Chartink data) | Pocket-pivot screener scan -> Telegram alerts | ALERTS |
 
 ## Repository layout
 
@@ -22,6 +23,7 @@ prajnan-agent/       Main live agent (strategies/, core/, brokers/, config/)
 prajnan-agent2/      Father's account agent
 nitin-agent/         Swing trading agent (EOD scan 18:30 IST)
 trishul-agent/       Mean reversion scanner
+pocket-pivot-agent/  Chartink pocket-pivot screener -> Telegram (every 60s, market hours)
 ```
 
 Deployment: each folder is copied to `~/` on the VM and run as a systemd service
