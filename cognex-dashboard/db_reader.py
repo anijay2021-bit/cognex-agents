@@ -66,14 +66,7 @@ async def get_recent_trades(db_path: str, limit: int = 20) -> list[dict]:
 
 async def get_today_pnl(db_path: str) -> dict:
     today = str(date.today())
-    rows = await _query(
-        db_path,
-        "SELECT * FROM daily_pnl WHERE date = ?",
-        (today,),
-    )
-    if rows:
-        return rows[0]
-    # If no row yet today, calculate from trades table
+    # Aggregate directly from trades table (daily_pnl table is unused)
     trades = await get_today_trades(db_path)
     wins   = [t for t in trades if (t.get("pnl_rs") or 0) > 0]
     losses = [t for t in trades if (t.get("pnl_rs") or 0) < 0]

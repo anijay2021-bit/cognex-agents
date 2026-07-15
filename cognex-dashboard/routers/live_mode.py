@@ -45,13 +45,6 @@ GROUPS = {
         "env_file": f"{BASE}/prajnan-agent/.env",
         "env_key":  "TRADING_MODE",
     },
-    "trishul": {
-        "label":    "Trishul — Mean Reversion",
-        "agent":    "trishul-agent",
-        "service":  "trishul-agent",
-        "env_file": f"{BASE}/trishul-agent/.env",
-        "env_key":  "TRADING_MODE",
-    },
 }
 
 

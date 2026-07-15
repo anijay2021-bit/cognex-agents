@@ -29,16 +29,6 @@ AGENTS = {
         "broker_data":  "AngelOne",
         "broker_exec":  "AngelOne",
     },
-    "trishul": {
-        "display_name": "Trishul",
-        "account":      "Kiran — r14592",
-        "service":      "trishul-agent",
-        "db":           None,          # No SQLite — logs via systemd journal
-        "log":          f"{BASE}/trishul-agent/logs/trishul.log",
-        "strategies":   ["Trishul Mean Reversion"],
-        "broker_data":  "Fyers",
-        "broker_exec":  "AngelOne",
-    },
     "nitin": {
         "display_name": "Nitin Agent",
         "account":      "Kiran - r14592",
