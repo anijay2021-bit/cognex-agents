@@ -91,10 +91,17 @@ async def get_today_pnl(db_path: str) -> dict:
 async def get_pnl_history(db_path: str, days: int = 30) -> list[dict]:
     return await _query(
         db_path,
-        """SELECT date, total_trades, winning_trades, losing_trades,
-                  gross_pnl_rs, net_pnl_rs, mode
-           FROM daily_pnl
-           ORDER BY date DESC LIMIT ?""",
+        """SELECT date(exit_time) AS date,
+                  COUNT(*) AS total_trades,
+                  SUM(CASE WHEN pnl_rs > 0 THEN 1 ELSE 0 END) AS winning_trades,
+                  SUM(CASE WHEN pnl_rs < 0 THEN 1 ELSE 0 END) AS losing_trades,
+                  ROUND(SUM(pnl_rs), 2) AS gross_pnl_rs,
+                  ROUND(SUM(pnl_rs), 2) AS net_pnl_rs,
+                  MAX(mode) AS mode
+           FROM trades
+           WHERE status = 'CLOSED' AND exit_time IS NOT NULL AND pnl_rs IS NOT NULL
+           GROUP BY date(exit_time)
+           ORDER BY date(exit_time) DESC LIMIT ?""",
         (days,),
     )
 
