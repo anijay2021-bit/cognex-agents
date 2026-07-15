@@ -4,6 +4,9 @@ import sys
 sys.path.insert(0, '/home/anijay2021/trishul-agent')
 from brokers.fyers_data import fetch_candles
 
+from config.settings import (RSI2_OVERSOLD, RSI2_OVERBOUGHT, REQUIRE_GREEN_CANDLE,
+    REQUIRE_RED_CANDLE, VOLUME_FILTER, VOLUME_MULT)
+
 def get_signals():
     try:
         # Daily candles for 200 EMA — need 300 days to ensure 200 valid EMAs
@@ -36,15 +39,15 @@ def get_signals():
             return None, spot_now, 0
 
         stretched_down = close < sma10
-        oversold       = rsi2 < 10
-        confirm_green  = prev['close'] > prev['open']
+        oversold       = rsi2 < RSI2_OVERSOLD
+        confirm_green  = (prev['close'] > prev['open']) if REQUIRE_GREEN_CANDLE else True
 
         stretched_up   = close > sma10
-        overbought     = rsi2 > 90
-        confirm_red    = prev['close'] < prev['open']
+        overbought     = rsi2 > RSI2_OVERBOUGHT
+        confirm_red    = (prev['close'] < prev['open']) if REQUIRE_RED_CANDLE else True
 
         avg_vol        = intraday['volume'].rolling(20).mean().iloc[-2]
-        normal_volume  = prev['volume'] < avg_vol * 1.8
+        normal_volume  = (prev['volume'] < avg_vol * VOLUME_MULT) if VOLUME_FILTER else True
 
         print(f"Spot: {spot_now:.0f} | EMA200: {ema200:.0f} | SMA10: {sma10:.0f} | RSI2: {rsi2:.1f}")
         print(f"Trend: {'UP' if trend_up else 'DOWN'} | Stretched: {'DOWN' if stretched_down else 'UP' if stretched_up else 'NO'}")

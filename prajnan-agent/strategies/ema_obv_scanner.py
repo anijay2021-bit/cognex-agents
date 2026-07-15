@@ -30,8 +30,10 @@ EMA_LOTS         = settings.ema_lots
 EMA_QUANTITY     = NIFTY_LOT_SIZE * EMA_LOTS   # 650
 EMA_FAST         = 9
 EMA_SLOW         = 21
-TARGET_MULT      = 1.5   # 1.5x premium
+TARGET_MULT      = 1.9   # 1.5x premium
 STOP_PCT         = 0.30  # 30% premium loss
+ENTRY_FROM     = "09:15"   # IST - earliest entry (dashboard-managed)
+NO_ENTRY_AFTER = "15:15"   # IST - no new entries after (dashboard-managed)
 
 
 def _get_nifty_futures_symbol() -> str:
@@ -171,7 +173,8 @@ class EmaObvScanner:
         if ist_min >= 60:
             ist_hour += 1
             ist_min  -= 60
-        return ist_hour > 9 or (ist_hour == 9 and ist_min >= 30)
+        hhmm = f"{ist_hour:02d}:{ist_min:02d}"
+        return ENTRY_FROM <= hhmm <= NO_ENTRY_AFTER
 
     def scan(self, spot_price: float = 0) -> Optional[dict]:
         """Main scan — returns signal dict or None"""

@@ -51,7 +51,7 @@ WEEKLY_EXIT_TIME    = "15:24"    # IST — exit weekly legs on expiry day
 ENTRY_TIME          = "15:26"    # IST — enter new positions after exit
 MONTHLY_EXIT_TIME   = "15:24"    # IST — exit all on monthly expiry day
 
-SL_CANDLE_TF        = 5          # minutes — candle TF for SL check
+SL_CANDLE_TF        = 10          # minutes — candle TF for SL check
 SL_CHECK_MODE       = "candle_close"   # "candle_close" or "ltp"
 PRODUCT_TYPE        = "CARRYFORWARD"   # Fyers product type for all orders
 

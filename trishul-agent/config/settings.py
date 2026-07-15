@@ -20,6 +20,26 @@ CAPITAL            = 500000
 RISK_PER_TRADE_PCT = 0.01
 MAX_DAILY_LOSS     = 15000
 VIX_CEILING        = 16.0
-MIN_DAYS_TO_EXPIRY = 3
+MIN_DAYS_TO_EXPIRY = 0
 MAX_DAYS_TO_EXPIRY = 5
 NIFTY_LOT_SIZE     = 65
+
+
+# --- Strategy tunables (managed by COGNEX dashboard - do not rename) ---
+PRODUCT_TYPE         = "CARRYFORWARD"   # INTRADAY or CARRYFORWARD
+FIXED_LOTS           = 10               # lots per trade (0 = risk-based sizing)
+RSI2_OVERSOLD        = 10
+RSI2_OVERBOUGHT      = 90
+RSI2_EXIT_CE         = 95
+RSI2_EXIT_PE         = 5
+REQUIRE_GREEN_CANDLE = False
+REQUIRE_RED_CANDLE   = False
+VOLUME_FILTER        = False
+VOLUME_MULT          = 1.8
+SMA10_EXIT           = False
+SL_TYPE              = "PREMIUM_PCT"    # SPOT_CANDLE_LOW | SPOT_CANDLE_HIGH | PREMIUM_PCT
+SL_PCT               = 30.0
+SCAN_FROM            = "09:15"          # IST
+SCAN_INTERVAL_MIN    = 15
+NO_ENTRY_AFTER       = "15:15"          # IST
+TIME_EXIT            = "15:15"          # IST

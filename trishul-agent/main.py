@@ -9,7 +9,9 @@ sys.path.insert(0, '/home/anijay2021/trishul-agent')
 
 from strategies.signal_engine import get_signals
 from brokers.angelone_orders import place_options_order
-from config.settings import CAPITAL, RISK_PER_TRADE_PCT, MAX_DAILY_LOSS, TRADING_MODE
+from config.settings import (CAPITAL, RISK_PER_TRADE_PCT, MAX_DAILY_LOSS, TRADING_MODE,
+    PRODUCT_TYPE, FIXED_LOTS, SL_TYPE, SL_PCT, SCAN_FROM, NO_ENTRY_AFTER, TIME_EXIT,
+    RSI2_EXIT_CE, RSI2_EXIT_PE)
 
 IST = pytz.timezone('Asia/Kolkata')
 daily_loss = 0
@@ -38,6 +40,10 @@ def run_trishul():
     global daily_loss
     now = datetime.now(IST)
     print(f"\n[{now.strftime('%H:%M:%S')}] Trishul scanning...")
+    hhmm = now.strftime('%H:%M')
+    if hhmm < SCAN_FROM or hhmm > NO_ENTRY_AFTER:
+        print(f"Outside entry window {SCAN_FROM}-{NO_ENTRY_AFTER} IST - skipping")
+        return
 
     if daily_loss >= MAX_DAILY_LOSS:
         print(f"Daily loss limit hit: {daily_loss}. No trades today.")
@@ -51,19 +57,21 @@ def run_trishul():
 
     atm    = get_atm_strike(spot)
     est_entry_premium = 85
-    est_stop_premium  = 45
-    qty    = calculate_qty(est_entry_premium, est_stop_premium)
+    est_stop_premium  = round(est_entry_premium * (1 - SL_PCT / 100.0)) if SL_TYPE == "PREMIUM_PCT" else 45
+    qty    = (FIXED_LOTS * 65) if FIXED_LOTS else calculate_qty(est_entry_premium, est_stop_premium)
     max_loss = (est_entry_premium - est_stop_premium) * qty
 
     msg = (
         f"🎯 TRISHUL SIGNAL\n"
         f"Mode: {TRADING_MODE}\n"
+        f"Product: {PRODUCT_TYPE}\n"
         f"Signal: {signal}\n"
         f"Spot: {spot:.0f}\n"
         f"ATM Strike: {atm}\n"
         f"RSI2: {rsi2:.1f}\n"
         f"Qty: {qty}\n"
         f"Max Risk: Rs {max_loss:.0f}\n"
+        f"Exit: RSI2>{RSI2_EXIT_CE} (CE) / RSI2<{RSI2_EXIT_PE} (PE) or {TIME_EXIT} IST\n"
         f"Time: {now.strftime('%H:%M:%S')} IST"
     )
     print(msg)

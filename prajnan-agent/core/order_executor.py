@@ -9,6 +9,8 @@ import time
 from datetime import datetime
 import pytz
 _IST = pytz.timezone('Asia/Kolkata')
+PRODUCT_TYPE = "CARRYFORWARD"  # INTRADAY | CARRYFORWARD (dashboard-managed)
+
 def _now_ist():
     return datetime.now(_IST)
 from loguru import logger
@@ -81,7 +83,7 @@ class OrderExecutor:
                 qty        = quantity,
                 side       = "BUY",
                 order_type = "MARKET",
-                product    = "INTRADAY"
+                product    = PRODUCT_TYPE
             )
 
         if not order_result.get("status"):
@@ -223,7 +225,7 @@ class OrderExecutor:
                     qty        = qty,
                     side       = "SELL",
                     order_type = "MARKET",
-                    product    = "INTRADAY"
+                    product    = PRODUCT_TYPE
                 )
 
             # Update database

@@ -1,6 +1,8 @@
 import sys, os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import time, signal, schedule, threading
+
+EOD_SQUAREOFF_IST = "15:14"  # IST - EOD square-off time (dashboard-managed)
 from datetime import datetime
 from zoneinfo import ZoneInfo
 from loguru import logger
@@ -145,6 +147,7 @@ class CognexOrchestrator:
                                 logger.warning(f"LTP fetch returned 0 for {sig['symbol']}")
                         except Exception as _ltp_e:
                             logger.warning(f"Could not fetch LTP for {sig['symbol']}: {_ltp_e}")
+                    sig["entry_price"] = ep   # persist fetched LTP so the trade records and the one-trade gate engages
                     ep_str=f"Rs {ep:.2f}" if ep else "N/A"
                     strategy_used=sig.get("strategy_used","RSI2")
                     if strategy_used=="EMA_OBV":
@@ -276,7 +279,9 @@ class CognexOrchestrator:
 
         # Register the decision cycle job
         schedule.every(settings.decision_cycle_minutes).minutes.do(self.decision_cycle)
-        schedule.every().day.at("09:55").do(self.eod_squareoff)  # 15:25 IST EOD square-off
+        _h, _m = map(int, EOD_SQUAREOFF_IST.split(":"))
+        _t = (_h * 60 + _m - 330) % 1440
+        schedule.every().day.at(f"{_t // 60:02d}:{_t % 60:02d}").do(self.eod_squareoff)  # EOD square-off (IST -> UTC)
         logger.info(
             f"\u23f0 Decision cycle scheduled every "
             f"{settings.decision_cycle_minutes} minutes"
