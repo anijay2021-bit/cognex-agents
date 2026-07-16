@@ -255,7 +255,7 @@ select.si{text-align:left;width:160px;cursor:pointer}
       <div class="chart-wrap"><canvas id="chart-equity"></canvas></div>
     </div>
     <div class="chart-card">
-      <div class="chart-head"><div class="chart-title">Daily P&L</div><div class="chart-sub">Last 30 days</div></div>
+      <div class="chart-head"><div class="chart-title">Daily P&L</div><div class="chart-sub">Last 90 days</div></div>
       <div class="chart-wrap"><canvas id="chart-daily"></canvas></div>
     </div>
   </div>
@@ -475,7 +475,7 @@ function set(id,v){const e=document.getElementById(id);if(e)e.textContent=v;}
 // ── P&L Charts ──────────────────────────────────────────────────────────────
 async function loadCharts(){
   try{
-    const r=await fetch(`${API}/api/data/pnl/history?days=30`);
+    const r=await fetch(`${API}/api/data/pnl/history?days=90`);
     const data=await r.json();
 
     // Merge all agents by date

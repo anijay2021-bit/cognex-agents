@@ -79,6 +79,7 @@ PO = f"{BASE}/prajnan-agent/core/order_executor.py"
 PM = f"{BASE}/prajnan-agent/main.py"
 NS = f"{BASE}/nitin-agent/config/settings.py"
 A2 = f"{BASE}/prajnan-agent2/strategies/rsi2_scanner.py"
+PPE = f"{BASE}/pocket-pivot-agent/config.env"
 
 PARAMS = {
   # ── TRISHUL ──────────────────────────────────────────────────────────────
@@ -132,6 +133,10 @@ PARAMS = {
     "a2_rsi_oversold":  {"label":"RSI oversold","desc":"Buy CE when RSI drops below this","group":"Prajnan2 RSI2","section":"Signal","dot":"dot-teal","type":"int","default":5,"unit":"","svc":"prajnan-agent2","file_map": (A2,"RSI_OVERSOLD","simple")},
     "a2_rsi_overbought":{"label":"RSI overbought","desc":"Buy PE when RSI rises above this","group":"Prajnan2 RSI2","section":"Signal","dot":"dot-teal","type":"int","default":95,"unit":"","svc":"prajnan-agent2","file_map": (A2,"RSI_OVERBOUGHT","simple")},
     "a2_sma_period":    {"label":"Trend SMA period","desc":"Daily SMA length for trend filter","group":"Prajnan2 RSI2","section":"Signal","dot":"dot-teal","type":"int","default":200,"unit":"","svc":"prajnan-agent2","file_map": (A2,"SMA_PERIOD","simple")},
+    # --- POCKET PIVOT (added 2026-07-16) ---
+    "pp_scan_from":     {"label":"Scan from","desc":"Start scanning at this time IST (Mon-Fri)","group":"Pocket Pivot","section":"Timing","dot":"dot-blue","type":"time","default":"09:15","unit":"","svc":"pocket-pivot-agent","file_map": (PPE,"SCAN_FROM","quoted")},
+    "pp_no_scan_after": {"label":"Stop scanning after","desc":"No scans after this time IST","group":"Pocket Pivot","section":"Timing","dot":"dot-blue","type":"time","default":"15:29","unit":"","svc":"pocket-pivot-agent","file_map": (PPE,"NO_SCAN_AFTER","quoted")},
+    "pp_interval":      {"label":"Scan interval","desc":"Seconds between Chartink scans","group":"Pocket Pivot","section":"Timing","dot":"dot-blue","type":"int","default":60,"unit":"sec","svc":"pocket-pivot-agent","file_map": (PPE,"INTERVAL_SEC","simple")},
 }
 
 # ── Endpoints ─────────────────────────────────────────────────────────────────
