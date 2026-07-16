@@ -114,7 +114,7 @@ async def tail_agent_log(agent_id: str, log_path: str):
 async def tail_trishul_journal():
     try:
         proc = await asyncio.create_subprocess_exec(
-            "journalctl", "-u", "trishul-agent", "-f", "--no-pager", "-o", "short-iso",
+            "journalctl", "-u", "nitin-agent", "-f", "--no-pager", "-o", "short-iso",
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.DEVNULL,
         )
@@ -128,7 +128,7 @@ async def tail_trishul_journal():
             msg = msg_match[1] if len(msg_match) > 1 else raw
             await hub.broadcast({
                 "type": "log_line",
-                "agent": "trishul",
+                "agent": "nitin",
                 "timestamp": _now(),
                 "level": "INFO",
                 "module": "systemd",
