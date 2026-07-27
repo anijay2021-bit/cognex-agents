@@ -11,7 +11,7 @@ Schedule (all IST, Mon-Fri):
   Every 5 min (09:20→15:20)  → check_sl()
 
 Run in background:
-  cd ~/prajnan-agent && source venv/bin/activate
+  cd ~/prajnan-calendar-agent && source venv/bin/activate
   nohup python3 strategies/calendar_main.py >> logs/calendar_spread.log 2>&1 &
 
 Check logs:
@@ -23,7 +23,7 @@ import os
 import sys
 import datetime
 
-sys.path.insert(0, os.path.expanduser("~/prajnan-agent"))
+sys.path.insert(0, os.path.expanduser("~/prajnan-calendar-agent"))
 
 from apscheduler.schedulers.blocking import BlockingScheduler
 from apscheduler.triggers.cron import CronTrigger
@@ -46,13 +46,13 @@ from config.settings import settings
 # LOGGING
 # ─────────────────────────────────────────────
 
-os.makedirs(os.path.expanduser("~/prajnan-agent/logs"), exist_ok=True)
+os.makedirs(os.path.expanduser("~/prajnan-calendar-agent/logs"), exist_ok=True)
 
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s IST [%(levelname)s] %(name)s: %(message)s",
     handlers=[
-        logging.FileHandler(os.path.expanduser("~/prajnan-agent/logs/calendar_spread.log")),
+        logging.FileHandler(os.path.expanduser("~/prajnan-calendar-agent/logs/calendar_spread.log")),
         logging.StreamHandler(sys.stdout),
     ]
 )

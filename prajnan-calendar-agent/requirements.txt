@@ -1,0 +1,8 @@
+fyers-apiv3>=3.0.0
+requests>=2.31.0
+APScheduler>=3.10.0
+pytz>=2023.3
+python-dotenv>=1.0.0
+pydantic>=2.5.0
+pydantic-settings>=2.1.0
+loguru>=0.7.0

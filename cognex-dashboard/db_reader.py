@@ -171,10 +171,10 @@ async def get_filtered_trades(
 
     if date_from:
         conditions.append("entry_time >= ?")
-        params.append(f"{date_from} 00:00:00")
+        params.append(f"{date_from}T00:00:00")
     if date_to:
         conditions.append("entry_time <= ?")
-        params.append(f"{date_to} 23:59:59")
+        params.append(f"{date_to}T23:59:59.999999")
     if strategy and strategy.upper() != "ALL":
         conditions.append("strategy_used = ?")
         params.append(strategy)

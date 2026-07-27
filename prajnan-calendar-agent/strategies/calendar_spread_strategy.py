@@ -42,7 +42,7 @@ logger = logging.getLogger(__name__)
 # CONFIGURATION
 # ─────────────────────────────────────────────
 
-STATE_FILE          = os.path.expanduser("~/prajnan-agent/config/calendar_state.json")
+STATE_FILE          = os.path.expanduser("~/prajnan-calendar-agent/config/calendar_state.json")
 BUY_SL_PERCENT      = 5.0       # % drop from hedge buy entry triggers buy SL
 LOTS                = 10         # 10 lots = 650 qty
 LOT_SIZE            = 65         # Nifty lot size
@@ -423,7 +423,7 @@ class CalendarSpreadStrategy:
 
     def _telegram(self, message: str):
         try:
-            from core.telegram_handler import send_telegram_message
+            from notify import send_telegram_message
             send_telegram_message(message, parse_mode="Markdown")
         except Exception as e:
             logger.warning(f"Telegram: {e}")

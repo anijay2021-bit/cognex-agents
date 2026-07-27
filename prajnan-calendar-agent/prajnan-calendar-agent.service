@@ -1,0 +1,17 @@
+[Unit]
+Description=Prajnan Calendar Agent — NIFTY Calendar Spread (Kiran's Account, Fyers)
+After=network.target prajnan-agent.service
+
+[Service]
+Type=simple
+User=anijay2021
+WorkingDirectory=/home/anijay2021/prajnan-calendar-agent
+ExecStart=/home/anijay2021/prajnan-calendar-agent/venv/bin/python3 main.py
+Restart=always
+RestartSec=30
+StandardOutput=append:/home/anijay2021/prajnan-calendar-agent/logs/calendar.log
+StandardError=append:/home/anijay2021/prajnan-calendar-agent/logs/calendar.log
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=multi-user.target

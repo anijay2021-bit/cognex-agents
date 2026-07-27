@@ -35,14 +35,14 @@ GROUPS = {
         "label":    "Prajñān — EMA+OBV",
         "agent":    "prajnan-agent",
         "service":  "prajnan-agent",
-        "env_file": f"{BASE}/prajnan-agent/.env",
+        "env_file": f"{BASE}/prajnan-agent/config/.env",
         "env_key":  "TRADING_MODE",
     },
     "prajnan_calendar": {
         "label":    "Prajñān — Calendar Spread",
-        "agent":    "prajnan-agent",
-        "service":  "prajnan-agent",
-        "env_file": f"{BASE}/prajnan-agent/.env",
+        "agent":    "prajnan-calendar-agent",
+        "service":  "prajnan-calendar-agent",
+        "env_file": f"{BASE}/prajnan-calendar-agent/config/.env",
         "env_key":  "TRADING_MODE",
     },
 }
