@@ -55,16 +55,16 @@ def parse_line(raw: str, agent_id: str) -> Optional[dict]:
     # ── RSI2 scanner lines ───────────────────────────────────────────────────
     if "rsi2_scanner" in module:
 
-        # "RSI2 Check | Spot:24049.65 SMA200:24040.47 RSI2:11.96 Time:09:50"
+        # "RSI2 Check | Spot:24049.65 EMA200:24040.47 RSI2:11.96 Time:09:50"
         m2 = re.search(
-            r'Spot:([\d.]+).*?SMA200:([\d.]+).*?RSI2:([\d.]+).*?Time:(\d+:\d+)',
+            r'Spot:([\d.]+).*?EMA200:([\d.]+).*?RSI2:([\d.]+).*?Time:(\d+:\d+)',
             message
         )
         if m2:
             base["parsed"] = {
                 "strategy": "RSI2",
                 "spot":     float(m2.group(1)),
-                "sma200":   float(m2.group(2)),
+                "ema200":   float(m2.group(2)),
                 "bar_time": m2.group(3) or "",
             }
             base["event"] = "rsi2_check"

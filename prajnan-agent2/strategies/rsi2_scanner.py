@@ -23,7 +23,7 @@ NIFTY_LOT_SIZE  = 65
 RSI2_LOTS       = settings.rsi2_lots
 RSI2_QUANTITY   = NIFTY_LOT_SIZE * RSI2_LOTS
 RSI_PERIOD      = 2
-SMA_PERIOD      = 200
+EMA_PERIOD      = 200
 RSI_OVERSOLD    = 5
 RSI_OVERBOUGHT  = 95
 
@@ -35,8 +35,8 @@ class RSI2Scanner:
         self.active_signal = None
         self._cached_df    = None
         self._cache_bucket = None
-        self._sma200_cache = None
-        self._sma200_date  = None
+        self._ema200_cache = None
+        self._ema200_date  = None
 
     def update_angelone(self, angelone_data):
         self.ao = angelone_data
@@ -50,22 +50,22 @@ class RSI2Scanner:
         rs    = avg_g / avg_l.replace(0, np.nan)
         return (100 - (100 / (1 + rs))).fillna(50)
 
-    def _get_sma200_daily(self) -> Optional[float]:
+    def _get_ema200_daily(self) -> Optional[float]:
         today = date.today()
-        if self._sma200_date == today and self._sma200_cache is not None:
-            return self._sma200_cache
+        if self._ema200_date == today and self._ema200_cache is not None:
+            return self._ema200_cache
         if self.ao is None:
             logger.error("AngelOne data connector not set")
             return None
         df = self.ao.get_nifty_daily_candles(days=300)
-        if df is None or len(df) < SMA_PERIOD:
-            logger.error(f"Not enough daily candles for SMA200 (got {len(df) if df is not None else 0})")
+        if df is None or len(df) < EMA_PERIOD:
+            logger.error(f"Not enough daily candles for EMA200 (got {len(df) if df is not None else 0})")
             return None
-        sma200 = df["close"].rolling(SMA_PERIOD).mean().iloc[-1]
-        self._sma200_cache = round(float(sma200), 2)
-        self._sma200_date  = today
-        logger.info(f"SMA200 refreshed: {self._sma200_cache}")
-        return self._sma200_cache
+        ema200 = df["close"].astype(float).ewm(span=EMA_PERIOD, adjust=False).mean().iloc[-1]
+        self._ema200_cache = round(float(ema200), 2)
+        self._ema200_date  = today
+        logger.info(f"EMA200 refreshed: {self._ema200_cache}")
+        return self._ema200_cache
 
     def _get_candles_cached(self) -> Optional[pd.DataFrame]:
         now            = datetime.now()
@@ -91,9 +91,9 @@ class RSI2Scanner:
 
     def scan(self, spot_price: float = 0) -> Optional[dict]:
         try:
-            sma200 = self._get_sma200_daily()
-            if sma200 is None:
-                logger.warning("RSI2: SMA200 unavailable — skipping scan")
+            ema200 = self._get_ema200_daily()
+            if ema200 is None:
+                logger.warning("RSI2: EMA200 unavailable — skipping scan")
                 return None
 
             df = self._get_candles_cached()
@@ -113,21 +113,21 @@ class RSI2Scanner:
 
             logger.info(
                 f"RSI2 Check | Spot:{spot} "
-                f"SMA200:{sma200} RSI2:{rsi2_val} Time:{candle_time}"
+                f"EMA200:{ema200} RSI2:{rsi2_val} Time:{candle_time}"
             )
 
             if self.active_signal:
-                return self._check_exit(spot, sma200, rsi2_val)
+                return self._check_exit(spot, ema200, rsi2_val)
 
-            if spot > sma200 and rsi2_val < RSI_OVERSOLD:
-                return self._build_signal("CE", spot, sma200, rsi2_val)
+            if spot > ema200 and rsi2_val < RSI_OVERSOLD:
+                return self._build_signal("CE", spot, ema200, rsi2_val)
 
-            if spot < sma200 and rsi2_val > RSI_OVERBOUGHT:
-                return self._build_signal("PE", spot, sma200, rsi2_val)
+            if spot < ema200 and rsi2_val > RSI_OVERBOUGHT:
+                return self._build_signal("PE", spot, ema200, rsi2_val)
 
             logger.debug(
                 f"RSI2: No signal — RSI:{rsi2_val} "
-                f"SMA:{sma200} Spot:{spot}"
+                f"EMA:{ema200} Spot:{spot}"
             )
             return None
 
@@ -136,7 +136,7 @@ class RSI2Scanner:
             return None
 
     def _build_signal(self, direction: str,
-                      spot: float, sma200: float,
+                      spot: float, ema200: float,
                       rsi2: float) -> dict:
         expiry = get_expiry_dates()
         strike = round(spot / 50) * 50
@@ -148,13 +148,13 @@ class RSI2Scanner:
             "quantity":  RSI2_QUANTITY,
             "lots":      RSI2_LOTS,
             "spot":      spot,
-            "sma200":    sma200,
+            "ema200":    ema200,
             "rsi2":      rsi2,
             "reason":    (
-                f"RSI2={rsi2} < {RSI_OVERSOLD} + Spot > SMA200"
+                f"RSI2={rsi2} < {RSI_OVERSOLD} + Spot > EMA200"
                 if direction == "CE"
                 else
-                f"RSI2={rsi2} > {RSI_OVERBOUGHT} + Spot < SMA200"
+                f"RSI2={rsi2} > {RSI_OVERBOUGHT} + Spot < EMA200"
             )
         }
         self.active_signal = signal
@@ -165,17 +165,17 @@ class RSI2Scanner:
         return signal
 
     def _check_exit(self, spot: float,
-                    sma200: float, rsi2: float) -> Optional[dict]:
+                    ema200: float, rsi2: float) -> Optional[dict]:
         direction = self.active_signal.get("direction")
         exit_ce   = (direction == "CE" and
-                     (rsi2 > RSI_OVERBOUGHT or spot < sma200))
+                     (rsi2 > RSI_OVERBOUGHT or spot < ema200))
         exit_pe   = (direction == "PE" and
-                     (rsi2 < RSI_OVERSOLD or spot > sma200))
+                     (rsi2 < RSI_OVERSOLD or spot > ema200))
         if exit_ce or exit_pe:
             reason = (
                 f"RSI2={rsi2} > {RSI_OVERBOUGHT}"
                 if rsi2 > RSI_OVERBOUGHT
-                else f"Spot {spot} crossed SMA200 {sma200}"
+                else f"Spot {spot} crossed EMA200 {ema200}"
             )
             exit_signal = {
                 "action":    "EXIT",
@@ -197,8 +197,8 @@ class RSI2Scanner:
             opt = (pos.get("option_type") or pos.get("direction") or "").upper()
             if opt not in ("CE", "PE"):
                 return None
-            sma200 = self._get_sma200_daily()
-            if sma200 is None:
+            ema200 = self._get_ema200_daily()
+            if ema200 is None:
                 return None
             df = self._get_candles_cached()
             if df is None or len(df) < 10:
@@ -206,12 +206,12 @@ class RSI2Scanner:
             df = df.copy()
             df["rsi2"] = self._calc_rsi2(df["close"])
             rsi2_val = round(float(df.iloc[-2]["rsi2"]), 2)
-            if opt == "CE" and (rsi2_val > RSI_OVERBOUGHT or spot < sma200):
+            if opt == "CE" and (rsi2_val > RSI_OVERBOUGHT or spot < ema200):
                 return (f"RSI2={rsi2_val}>{RSI_OVERBOUGHT}"
-                        if rsi2_val > RSI_OVERBOUGHT else f"Spot {spot}<SMA200 {sma200}")
-            if opt == "PE" and (rsi2_val < RSI_OVERSOLD or spot > sma200):
+                        if rsi2_val > RSI_OVERBOUGHT else f"Spot {spot}<EMA200 {ema200}")
+            if opt == "PE" and (rsi2_val < RSI_OVERSOLD or spot > ema200):
                 return (f"RSI2={rsi2_val}<{RSI_OVERSOLD}"
-                        if rsi2_val < RSI_OVERSOLD else f"Spot {spot}>SMA200 {sma200}")
+                        if rsi2_val < RSI_OVERSOLD else f"Spot {spot}>EMA200 {ema200}")
             return None
         except Exception as e:
             logger.error(f"should_exit error: {e}")

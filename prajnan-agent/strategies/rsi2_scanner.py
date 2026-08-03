@@ -25,7 +25,7 @@ NIFTY_LOT_SIZE   = 65
 RSI2_LOTS        = settings.rsi2_lots
 RSI2_QUANTITY    = NIFTY_LOT_SIZE * RSI2_LOTS  # 650
 RSI_PERIOD       = 2
-SMA_PERIOD       = 200
+EMA_PERIOD       = 200
 RSI_OVERSOLD     = 5
 RSI_OVERBOUGHT   = 95
 TIMEFRAME        = 5          # minutes — kept for backward compatibility
@@ -151,19 +151,19 @@ class RSI2Scanner:
             logger.error(f"RSI2 daily fetch error: {e}")
             return None
 
-    def _get_sma200_daily(self):
+    def _get_ema200_daily(self):
         today = date.today()
-        if getattr(self, "_sma200_date", None) == today and getattr(self, "_sma200_cache", None) is not None:
-            return self._sma200_cache
+        if getattr(self, "_ema200_date", None) == today and getattr(self, "_ema200_cache", None) is not None:
+            return self._ema200_cache
         dfx = self._fetch_daily_candles()
-        if dfx is None or len(dfx) < SMA_PERIOD:
-            logger.warning("RSI2: not enough daily candles for SMA200")
+        if dfx is None or len(dfx) < EMA_PERIOD:
+            logger.warning("RSI2: not enough daily candles for EMA200")
             return None
-        sma = dfx["close"].astype(float).rolling(SMA_PERIOD).mean().iloc[-1]
-        self._sma200_cache = round(float(sma), 2)
-        self._sma200_date = today
-        logger.info(f"RSI2 daily SMA200 refreshed: {self._sma200_cache}")
-        return self._sma200_cache
+        ema = dfx["close"].astype(float).ewm(span=EMA_PERIOD, adjust=False).mean().iloc[-1]
+        self._ema200_cache = round(float(ema), 2)
+        self._ema200_date = today
+        logger.info(f"RSI2 daily EMA200 refreshed: {self._ema200_cache}")
+        return self._ema200_cache
 
     def _build_option_symbol(self, strike: int, option_type: str) -> str:
         from strategies.options_selector import build_fyers_option_symbol
@@ -179,12 +179,12 @@ class RSI2Scanner:
             return None
 
         df = self._get_candles_cached()
-        if df is None or len(df) < SMA_PERIOD + 10:
+        if df is None or len(df) < EMA_PERIOD + 10:
             logger.debug("RSI2: Not enough candle data")
             return None
 
         close  = df["close"].values.astype(float)
-        sma200_daily = self._get_sma200_daily()
+        ema200_daily = self._get_ema200_daily()
         rsi2   = self._calculate_rsi2(close)
 
         # Get today's candles
@@ -196,27 +196,27 @@ class RSI2Scanner:
         # Latest completed candle index
         last_idx   = today_df.index[-2]
         last_rsi   = rsi2[last_idx]
-        last_sma   = sma200_daily
+        last_ema   = ema200_daily
         last_close = close[last_idx]
         last_time  = df.iloc[last_idx]["timestamp"]
 
-        if last_sma is None or np.isnan(last_rsi):
-            logger.debug(f"RSI2: NaN values — RSI:{last_rsi} SMA:{last_sma}")
+        if last_ema is None or np.isnan(last_rsi):
+            logger.debug(f"RSI2: NaN values — RSI:{last_rsi} EMA:{last_ema}")
             return None
 
         logger.info(
             f"RSI2 Check | Spot:{last_close:.2f} "
-            f"SMA200:{last_sma:.2f} RSI2:{last_rsi:.2f} "
+            f"EMA200:{last_ema:.2f} RSI2:{last_rsi:.2f} "
             f"Time:{last_time.strftime('%H:%M')}"
         )
 
         atm = self._get_atm_strike(nifty_spot)
 
         # CE Signal — bullish bounce
-        if last_close > last_sma and last_rsi < RSI_OVERSOLD:
+        if last_close > last_ema and last_rsi < RSI_OVERSOLD:
             symbol = self._build_option_symbol(atm, "CE")
             logger.info(
-                f"RSI2 CE SIGNAL — Spot:{last_close} > SMA:{last_sma:.2f} "
+                f"RSI2 CE SIGNAL — Spot:{last_close} > EMA:{last_ema:.2f} "
                 f"RSI:{last_rsi:.2f} < {RSI_OVERSOLD}"
             )
             return {
@@ -229,20 +229,20 @@ class RSI2Scanner:
                 "quantity":    RSI2_QUANTITY,
                 "strategy":    "RSI2",
                 "signal_type": "BULLISH_BOUNCE",
-                "sma200":      round(last_sma, 2),
+                "ema200":      round(last_ema, 2),
                 "rsi2":        round(last_rsi, 2),
                 "spot":        last_close,
                 "reasoning": (
-                    f"RSI2 bullish bounce: Nifty {last_close:.2f} > 200SMA {last_sma:.2f}. "
+                    f"RSI2 bullish bounce: Nifty {last_close:.2f} > 200EMA {last_ema:.2f}. "
                     f"RSI(2)={last_rsi:.2f} < {RSI_OVERSOLD} — oversold. BUY {atm}CE."
                 )
             }
 
         # PE Signal — bearish bounce
-        if last_close < last_sma and last_rsi > RSI_OVERBOUGHT:
+        if last_close < last_ema and last_rsi > RSI_OVERBOUGHT:
             symbol = self._build_option_symbol(atm, "PE")
             logger.info(
-                f"RSI2 PE SIGNAL — Spot:{last_close} < SMA:{last_sma:.2f} "
+                f"RSI2 PE SIGNAL — Spot:{last_close} < EMA:{last_ema:.2f} "
                 f"RSI:{last_rsi:.2f} > {RSI_OVERBOUGHT}"
             )
             return {
@@ -255,17 +255,17 @@ class RSI2Scanner:
                 "quantity":    RSI2_QUANTITY,
                 "strategy":    "RSI2",
                 "signal_type": "BEARISH_BOUNCE",
-                "sma200":      round(last_sma, 2),
+                "ema200":      round(last_ema, 2),
                 "rsi2":        round(last_rsi, 2),
                 "spot":        last_close,
                 "reasoning": (
-                    f"RSI2 bearish bounce: Nifty {last_close:.2f} < 200SMA {last_sma:.2f}. "
+                    f"RSI2 bearish bounce: Nifty {last_close:.2f} < 200EMA {last_ema:.2f}. "
                     f"RSI(2)={last_rsi:.2f} > {RSI_OVERBOUGHT} — overbought. BUY {atm}PE."
                 )
             }
 
         logger.debug(
-            f"RSI2: No signal — RSI:{last_rsi:.2f} SMA:{last_sma:.2f} Spot:{last_close:.2f}"
+            f"RSI2: No signal — RSI:{last_rsi:.2f} EMA:{last_ema:.2f} Spot:{last_close:.2f}"
         )
         return None
 
@@ -278,11 +278,11 @@ class RSI2Scanner:
             return None
 
         df = self._get_candles_cached()
-        if df is None or len(df) < SMA_PERIOD + 10:
+        if df is None or len(df) < EMA_PERIOD + 10:
             return None
 
         close  = df["close"].values.astype(float)
-        sma200_daily = self._get_sma200_daily()
+        ema200_daily = self._get_ema200_daily()
         rsi2   = self._calculate_rsi2(close)
 
         today_idx = df[df["timestamp"].dt.date == date.today()].index
@@ -291,10 +291,10 @@ class RSI2Scanner:
 
         last_idx   = today_idx[-2]
         last_rsi   = rsi2[last_idx]
-        last_sma   = sma200_daily
+        last_ema   = ema200_daily
         last_close = close[last_idx]
 
-        if last_sma is None or np.isnan(last_rsi):
+        if last_ema is None or np.isnan(last_rsi):
             return None
 
         option_type = position.get("option_type", "CE")
@@ -302,14 +302,14 @@ class RSI2Scanner:
         if option_type == "CE":
             if last_rsi > RSI_OVERBOUGHT:
                 return f"RSI2 exit — RSI({last_rsi:.2f}) > {RSI_OVERBOUGHT}"
-            if last_close < last_sma:
-                return f"RSI2 SL — Spot({last_close:.2f}) < SMA200({last_sma:.2f})"
+            if last_close < last_ema:
+                return f"RSI2 SL — Spot({last_close:.2f}) < EMA200({last_ema:.2f})"
 
         elif option_type == "PE":
             if last_rsi < RSI_OVERSOLD:
                 return f"RSI2 exit — RSI({last_rsi:.2f}) < {RSI_OVERSOLD}"
-            if last_close > last_sma:
-                return f"RSI2 SL — Spot({last_close:.2f}) > SMA200({last_sma:.2f})"
+            if last_close > last_ema:
+                return f"RSI2 SL — Spot({last_close:.2f}) > EMA200({last_ema:.2f})"
 
         return None
 

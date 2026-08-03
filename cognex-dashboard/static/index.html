@@ -189,7 +189,7 @@ select.si{text-align:left;width:160px;cursor:pointer}
 </div>
 
 <div class="hdr">
-  <div class="logo"><div class="li">⚡</div><div><div class="lt">COGNEX Dashboard</div><div class="ls">Prajñān · Prajñān2 · Trishul</div></div></div>
+  <div class="logo"><div class="li">⚡</div><div><div class="lt">COGNEX Dashboard</div><div class="ls">Prajñān · Prajñān2 · Nitin · Calendar Agent + Pocket Pivot</div></div></div>
   <div class="hr2">
     <div class="live-banner" id="live-banner">🔴 LIVE TRADING ACTIVE</div>
     <div class="mp">📋 PAPER MODE</div>
@@ -231,7 +231,7 @@ select.si{text-align:left;width:160px;cursor:pointer}
       <div class="abt"><div class="ab start" onclick="act('prajnan','start')">▶ Start</div><div class="ab stop" onclick="act('prajnan','stop')">⏹ Stop</div><div class="ab restart" onclick="act('prajnan','restart')">↺ Restart</div></div>
       <div class="live-strats">
         <div class="live-row"><span class="live-name">EMA+OBV</span><button class="live-btn paper" id="lb-prajnan_ema" onclick="confirmLive('prajnan_ema','Prajñān — EMA+OBV')">PAPER</button></div>
-        <div class="live-row"><span class="live-name">Calendar Spread</span><button class="live-btn paper" id="lb-prajnan_calendar" onclick="confirmLive('prajnan_calendar','Prajñān — Calendar Spread')">PAPER</button></div>
+        
       </div>
     </div>
     <div class="ac" id="card-prajnan2">
@@ -240,11 +240,21 @@ select.si{text-align:left;width:160px;cursor:pointer}
       <div class="abt"><div class="ab start" onclick="act('prajnan2','start')">▶ Start</div><div class="ab stop" onclick="act('prajnan2','stop')">⏹ Stop</div><div class="ab restart" onclick="act('prajnan2','restart')">↺ Restart</div></div>
       <div class="live-strats"><div class="live-row"><span class="live-name">RSI2</span><span style="font-size:10px;color:#94a3b8">stays PAPER</span></div></div>
     </div>
-    <div class="ac" id="card-trishul">
-      <div class="atp"><div><div class="an">Trishul</div><div class="as2">Kiran · r14592 · David Hanlin</div></div><div class="sp unknown" id="pill-trishul"><div class="spd"></div><span>—</span></div></div>
-      <div class="asts"><div class="ast"><div class="al">Strategy</div><div class="av" style="font-size:11px;color:#64748b">Mean Rev</div></div><div class="ast"><div class="al">Mode</div><div class="av" style="font-size:11px;color:#7c3aed">PAPER</div></div><div class="ast"><div class="al">Broker</div><div class="av" style="font-size:11px;color:#64748b">AngelOne</div></div></div>
-      <div class="abt"><div class="ab start" onclick="act('trishul','start')">▶ Start</div><div class="ab stop" onclick="act('trishul','stop')">⏹ Stop</div><div class="ab restart" onclick="act('trishul','restart')">↺ Restart</div></div>
-      <div class="live-strats"><div class="live-row"><span class="live-name">Trishul Mean Reversion</span><button class="live-btn paper" id="lb-trishul" onclick="confirmLive('trishul','Trishul — Mean Reversion')">PAPER</button></div></div>
+    <div class="ac" id="card-nitin">
+      <div class="atp"><div><div class="an">Nitin</div><div class="as2">Kiran - r14592 - Swing (PAPER)</div></div><div class="sp unknown" id="pill-nitin"><div class="spd"></div><span>-</span></div></div>
+      <div class="asts"><div class="ast"><div class="al">Today P&L</div><div class="av" id="av-pnl-nitin">-</div></div><div class="ast"><div class="al">Trades</div><div class="av cb" id="av-tr-nitin">-</div></div></div>
+      <div class="abt"><div class="ab start" onclick="act('nitin','start')">Start</div><div class="ab stop" onclick="act('nitin','stop')">Stop</div><div class="ab restart" onclick="act('nitin','restart')">Restart</div></div>
+      <div class="live-strats"><div class="live-row"><span class="live-name">Flag / Base / DTL / VCP</span><span style="font-size:10px;color:#94a3b8">PAPER</span></div></div>
+    </div>
+    <div class="ac" id="card-pocketpivot">
+      <div class="atp"><div><div class="an">Pocket Pivot</div><div class="as2">Chartink screener - Telegram alerts</div></div><div class="sp unknown" id="pill-pocketpivot"><div class="spd"></div><span>-</span></div></div>
+      <div class="asts"><div class="ast"><div class="al">Scans</div><div class="av" style="font-size:11px;color:#64748b">every 60s</div></div><div class="ast"><div class="al">Window</div><div class="av" style="font-size:11px;color:#64748b">09:15-15:29</div></div></div>
+      <div class="abt"><div class="ab start" onclick="act('pocketpivot','start')">Start</div><div class="ab stop" onclick="act('pocketpivot','stop')">Stop</div><div class="ab restart" onclick="act('pocketpivot','restart')">Restart</div></div>
+    </div>
+    <div class="ac" id="card-prajnan_calendar">
+      <div class="atp"><div><div class="an">Prajnan Calendar Agent</div><div class="as2">Kiran — Fyers (standalone)</div></div><div class="sp unknown" id="pill-prajnan_calendar"><div class="spd"></div><span>—</span></div></div>
+      <div class="abt"><div class="ab start" onclick="act('prajnan_calendar','start')">Start</div><div class="ab stop" onclick="act('prajnan_calendar','stop')">Stop</div><div class="ab restart" onclick="act('prajnan_calendar','restart')">Restart</div></div>
+      <div class="live-strats"><div class="live-row"><span class="live-name">Calendar Spread</span><button class="live-btn paper" id="lb-prajnan_calendar" onclick="confirmLive('prajnan_calendar','Prajnan Calendar Agent — Calendar Spread')">PAPER</button></div></div>
     </div>
   </div>
 
@@ -255,7 +265,7 @@ select.si{text-align:left;width:160px;cursor:pointer}
       <div class="chart-wrap"><canvas id="chart-equity"></canvas></div>
     </div>
     <div class="chart-card">
-      <div class="chart-head"><div class="chart-title">Daily P&L</div><div class="chart-sub">Last 30 days</div></div>
+      <div class="chart-head"><div class="chart-title">Daily P&L</div><div class="chart-sub">Last 90 days</div></div>
       <div class="chart-wrap"><canvas id="chart-daily"></canvas></div>
     </div>
   </div>
@@ -264,11 +274,11 @@ select.si{text-align:left;width:160px;cursor:pointer}
   <div style="display:grid;grid-template-columns:320px 1fr;gap:14px">
     <div class="card">
       <div class="ct">📡 Live Signal Monitor</div>
-      <div class="sc"><div class="sct"><div class="scn">RSI2 Mean Reversion</div><div class="sctm" id="r-ts">—</div></div><div class="scg"><div><div class="sk">Nifty Spot</div><div class="sv cb" id="r-spot">—</div></div><div><div class="sk">SMA 200</div><div class="sv" id="r-sma">—</div></div><div style="grid-column:1/-1"><div class="sk">RSI2 &nbsp;<span style="color:#94a3b8;font-size:9px">CE·PE thresholds</span></div><div class="sv" id="r-rsi" style="font-size:22px">—</div><div class="sbar"><div class="sbf" id="r-bar" style="width:50%;background:#2563eb"></div></div></div></div><div class="scf"><div class="scfl">Status</div><div class="tbdg tw" id="r-badge">Watching</div></div></div>
+      <div class="sc"><div class="sct"><div class="scn">RSI2 Mean Reversion</div><div class="sctm" id="r-ts">—</div></div><div class="scg"><div><div class="sk">Nifty Spot</div><div class="sv cb" id="r-spot">—</div></div><div><div class="sk">EMA 200</div><div class="sv" id="r-ema">—</div></div><div style="grid-column:1/-1"><div class="sk">RSI2 &nbsp;<span style="color:#94a3b8;font-size:9px">CE·PE thresholds</span></div><div class="sv" id="r-rsi" style="font-size:22px">—</div><div class="sbar"><div class="sbf" id="r-bar" style="width:50%;background:#2563eb"></div></div></div></div><div class="scf"><div class="scfl">Status</div><div class="tbdg tw" id="r-badge">Watching</div></div></div>
       <div class="sc"><div class="sct"><div class="scn">EMA Crossover + OBV</div><div class="sctm" id="e-ts">—</div></div><div class="scg"><div><div class="sk">EMA 9</div><div class="sv" id="e-9">—</div></div><div><div class="sk">EMA 21</div><div class="sv" id="e-21">—</div></div><div><div class="sk">RSI2</div><div class="sv" id="e-rsi">—</div></div><div><div class="sk">Cross</div><div class="sv" id="e-cross">—</div></div></div><div class="scf"><div class="scfl">Status</div><div class="tbdg tn" id="e-badge">No cross</div></div></div>
     </div>
     <div class="card lp">
-      <div class="lt2"><div class="ct" style="margin:0">📋 Live Log Stream</div><div style="display:flex;gap:4px"><div class="lfb active" onclick="setF('all',this)">All</div><div class="lfb" onclick="setF('prajnan',this)">Prajñān</div><div class="lfb" onclick="setF('prajnan2',this)">P2</div><div class="lfb" onclick="setF('trishul',this)">Trishul</div></div><span style="font-size:10px;color:#94a3b8;margin-left:auto" id="lct">0 lines</span></div>
+      <div class="lt2"><div class="ct" style="margin:0">📋 Live Log Stream</div><div style="display:flex;gap:4px"><div class="lfb active" onclick="setF('all',this)">All</div><div class="lfb" onclick="setF('prajnan',this)">Prajñān</div><div class="lfb" onclick="setF('prajnan2',this)">P2</div><div class="lfb" onclick="setF('nitin',this)">Nitin</div></div><span style="font-size:10px;color:#94a3b8;margin-left:auto" id="lct">0 lines</span></div>
       <div class="ls2" id="log-s"></div>
     </div>
   </div>
@@ -311,7 +321,7 @@ select.si{text-align:left;width:160px;cursor:pointer}
       </div>
       <div style="margin-left:auto;display:flex;gap:6px">
         <div class="tt active" id="ttp" onclick="setTT('prajnan',this)">Prajñān</div>
-        <div class="tt" id="ttp2" onclick="setTT('prajnan2',this)">Prajñān 2</div>
+        <div class="tt" id="ttp2" onclick="setTT('prajnan2',this)">Prajñān 2</div><div class="tt" id="ttpn" onclick="setTT('nitin',this)">Nitin</div>
       </div>
     </div>
   </div>
@@ -336,7 +346,7 @@ select.si{text-align:left;width:160px;cursor:pointer}
 <!-- LOGS TAB -->
 <div class="tc" id="tab-logs">
   <div class="card lp">
-    <div class="lt2"><div class="ct" style="margin:0">Full Log Stream</div><div style="display:flex;gap:4px"><div class="lfb active" onclick="setF2('all',this)">All</div><div class="lfb" onclick="setF2('prajnan',this)">Prajñān</div><div class="lfb" onclick="setF2('prajnan2',this)">P2</div><div class="lfb" onclick="setF2('trishul',this)">Trishul</div></div></div>
+    <div class="lt2"><div class="ct" style="margin:0">Full Log Stream</div><div style="display:flex;gap:4px"><div class="lfb active" onclick="setF2('all',this)">All</div><div class="lfb" onclick="setF2('prajnan',this)">Prajñān</div><div class="lfb" onclick="setF2('prajnan2',this)">P2</div><div class="lfb" onclick="setF2('nitin',this)">Nitin</div></div></div>
     <div class="ls2" id="log-s2" style="height:500px"></div>
   </div>
 </div>
@@ -385,7 +395,7 @@ function addLine(sid,m){const s=document.getElementById(sid);if(!s)return;const 
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function setF(f,btn){G.f=f;document.querySelectorAll('#tab-dashboard .lfb').forEach(b=>b.classList.remove('active'));btn.classList.add('active');const s=document.getElementById('log-s');s.innerHTML='';G.logs.filter(m=>f==='all'||f===m.agent).forEach(m=>addLine('log-s',m));s.scrollTop=s.scrollHeight;}
 function setF2(f,btn){G.f2=f;document.querySelectorAll('#tab-logs .lfb').forEach(b=>b.classList.remove('active'));btn.classList.add('active');const s=document.getElementById('log-s2');s.innerHTML='';G.logs.filter(m=>f==='all'||f===m.agent).forEach(m=>addLine('log-s2',m));s.scrollTop=s.scrollHeight;}
-function updR(p,ts){if(!p)return;set('r-spot',p.spot?p.spot.toLocaleString('en-IN',{maximumFractionDigits:0}):'—');set('r-sma',p.sma200?p.sma200.toFixed(1):'—');const r=p.rsi2,el=document.getElementById('r-rsi');if(el){el.textContent=r!==undefined?r.toFixed(2):'—';el.style.color=r<=6?'#16a34a':r>=94?'#ef4444':r<=15||r>=85?'#d97706':'#0f172a';}const bar=document.getElementById('r-bar');if(bar){bar.style.width=Math.min(100,r)+'%';bar.style.background=r<=6?'#16a34a':r>=94?'#ef4444':'#2563eb';}const b=document.getElementById('r-badge');if(b){if(r<=6){b.className='tbdg ts2';b.textContent='⚡ CE SIGNAL';}else if(r>=94){b.className='tbdg ts2';b.textContent='⚡ PE SIGNAL';}else{b.className='tbdg tw';b.textContent='Watching';}}set('r-ts',(ts||'').slice(11,19));}
+function updR(p,ts){if(!p)return;set('r-spot',p.spot?p.spot.toLocaleString('en-IN',{maximumFractionDigits:0}):'—');set('r-ema',p.ema200?p.ema200.toFixed(1):'—');const r=p.rsi2,el=document.getElementById('r-rsi');if(el){el.textContent=r!==undefined?r.toFixed(2):'—';el.style.color=r<=6?'#16a34a':r>=94?'#ef4444':r<=15||r>=85?'#d97706':'#0f172a';}const bar=document.getElementById('r-bar');if(bar){bar.style.width=Math.min(100,r)+'%';bar.style.background=r<=6?'#16a34a':r>=94?'#ef4444':'#2563eb';}const b=document.getElementById('r-badge');if(b){if(r<=6){b.className='tbdg ts2';b.textContent='⚡ CE SIGNAL';}else if(r>=94){b.className='tbdg ts2';b.textContent='⚡ PE SIGNAL';}else{b.className='tbdg tw';b.textContent='Watching';}}set('r-ts',(ts||'').slice(11,19));}
 function updE(p,ts){if(!p)return;set('e-9',p.ema9?p.ema9.toFixed(1):'—');set('e-21',p.ema21?p.ema21.toFixed(1):'—');set('e-rsi',p.rsi2?p.rsi2.toFixed(2):'—');const el=document.getElementById('e-cross'),b=document.getElementById('e-badge');if(p.crossover){if(el){el.textContent='▲ Bullish';el.style.color='#16a34a';}if(b){b.className='tbdg ts2';b.textContent='⚡ BUY signal';}}else{if(el){el.textContent='▼ No cross';el.style.color='#ef4444';}if(b){b.className='tbdg tn';b.textContent='No cross';}}set('e-ts',(ts||'').slice(11,19));}
 function updSt(d){Object.entries(d||{}).forEach(([id,s])=>{const c=document.getElementById('card-'+id),p=document.getElementById('pill-'+id);if(!c||!p)return;const r=s.running||s.status==='active';c.className='ac '+(r?'running':'stopped');p.className='sp '+(r?'running':s.status==='unknown'?'unknown':'stopped');p.innerHTML=`<div class="spd"></div><span>${r?'Running':s.status||'Stopped'}</span>`;});}
 function updSn(id,d){
@@ -475,7 +485,7 @@ function set(id,v){const e=document.getElementById(id);if(e)e.textContent=v;}
 // ── P&L Charts ──────────────────────────────────────────────────────────────
 async function loadCharts(){
   try{
-    const r=await fetch(`${API}/api/data/pnl/history?days=30`);
+    const r=await fetch(`${API}/api/data/pnl/history?days=90`);
     const data=await r.json();
 
     // Merge all agents by date
@@ -575,16 +585,20 @@ async function toggleLive(group,action){
 
 // ── Settings ─────────────────────────────────────────────────────────────────
 const GROUPS=[
-  {id:'trishul',label:'Trishul — Mean Reversion'},
   {id:'prajnan_rsi2',label:'Prajñān — RSI2 Strategy'},
   {id:'prajnan_ema',label:'Prajñān — EMA Crossover + OBV'},
   {id:'prajnan_cal',label:'Prajñān — Calendar Spread'},
+  {id:'nitin',label:'Nitin - Swing Setups'},
+  {id:'prajnan2_rsi2',label:'Prajnan2 - RSI2'},
+  {id:'pocketpivot',label:'Pocket Pivot - Screener'},
 ];
 const GMAP={
-  trishul:['t_product_type','t_rsi2_oversold','t_green_candle','t_trend_ce','t_rsi2_overbought','t_red_candle','t_vol_filter','t_vol_mult','t_rsi2_exit_ce','t_rsi2_exit_pe','t_sma_exit','t_sl_type','t_sl_pct','t_lots','t_daily_loss','t_vix','t_min_dte','t_scan_from','t_scan_interval','t_no_entry_after','t_time_exit'],
   prajnan_rsi2:['r_oversold','r_overbought','r_exit_ce','r_exit_pe','r_lots','r_daily_loss'],
   prajnan_ema:['e_product_type','e_ema_fast','e_ema_slow','e_obv_lookback','e_rsi2_min','e_rsi2_max','e_rsi2_priority','e_target_mult','e_sl_pct','e_ema_cross_exit','e_lots','e_daily_loss','e_entry_from','e_no_entry_after','e_squareoff'],
   prajnan_cal:['c_lots','c_sl_candle','c_flip_sl','c_max_flips','c_roll_exit','c_roll_entry','c_monthly_exit','c_skip_resell','c_hedge','c_hedge_ce','c_hedge_pe','c_daily_loss'],
+  nitin:['n_mode','n_capital','n_risk_pct','n_max_alloc','n_max_stop','n_max_positions','n_min_turnover','n_scan_time','n_monitor_min','n_signal_valid'],
+  prajnan2_rsi2:['a2_rsi_period','a2_rsi_oversold','a2_rsi_overbought','a2_ema_period'],
+  pocketpivot:['pp_scan_from','pp_no_scan_after','pp_interval'],
 };
 
 async function loadCfg(){
@@ -636,7 +650,7 @@ function showT(gid,msg){const t=document.getElementById('sti-'+gid),m=document.g
 
 // Data loading
 async function loadA(){try{const r=await fetch(`${API}/api/agents/`);(await r.json()).forEach(a=>updSt({[a.id]:a}));}catch(e){}}
-async function loadT2(){try{const r=await fetch(`${API}/api/data/today`),d=await r.json();['prajnan','prajnan2'].forEach(id=>{G.trades[id]=d[id]||[];});renderT();}catch(e){}}
+async function loadT2(){try{const r=await fetch(`${API}/api/data/today`),d=await r.json();Object.keys(d).forEach(id=>{G.trades[id]=d[id]||[];});renderT();}catch(e){}}
 async function loadSu(){try{const r=await fetch(`${API}/api/data/summary`),d=await r.json();Object.entries(d).forEach(([id,s])=>{updSn(id,s);const t=d[id]?.total_trades||0;set('pnl-trades',Object.values(d).reduce((a,v)=>a+(v?.total_trades||0),0)+' total trades');const tw=Object.values(d).reduce((a,v)=>a+(v?.winning_trades||0),0);set('pnl-wr',t?Math.round(tw/Object.values(d).reduce((a,v)=>a+(v?.total_trades||0),0)*100)+'%':'—');});}catch(e){}}
 
 conn();loadA();loadSu();loadT2();loadCharts();loadLiveModes();initFilters();
