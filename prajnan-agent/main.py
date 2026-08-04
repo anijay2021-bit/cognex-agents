@@ -75,7 +75,7 @@ class CognexOrchestrator:
                         "action":        "EXIT",
                         "symbol":        _open_rsi2.symbol,
                         "rsi2":          0,
-                        "sma200":        0,
+                        "ema200":        0,
                         "spot":          nifty_spot,
                         "exit_price":    _xp,
                         "reason":        _exit_reason,
@@ -124,7 +124,7 @@ class CognexOrchestrator:
                         "target_price":  round(ep * 1.5, 2),
                         "stop_price":    round(ep * 0.70, 2),
                         "rsi2":          ema_sig.get("rsi2", 0),
-                        "sma200":        0,
+                        "ema200":        0,
                         "spot":          nifty_spot,
                         "reasoning":     ema_sig.get("reason", "EMA+OBV signal"),
                         "strategy_used": "EMA_OBV"
@@ -166,7 +166,7 @@ class CognexOrchestrator:
                             f"Symbol: {sig['symbol']}\n"
                             f"Direction: {sig['direction']}\n"
                             f"Entry Price: {ep_str}\n"
-                            f"RSI2: {sig['rsi2']:.2f}  |  SMA200: {sig['sma200']:.0f}\n"
+                            f"RSI2: {sig['rsi2']:.2f}  |  EMA200: {sig['ema200']:.0f}\n"
                             f"Spot: {sig['spot']:.0f}\n"
                             f"Reason: {sig['reasoning']}"
                         )
@@ -175,7 +175,7 @@ class CognexOrchestrator:
                         f"\U0001f6d1 *RSI2 EXIT*\n"
                         f"Symbol: {sig['symbol']}\n"
                         f"Exit Price: Rs {sig.get('exit_price',0):.2f}\n"
-                        f"RSI2: {sig['rsi2']:.2f}  |  SMA200: {sig['sma200']:.0f}\n"
+                        f"RSI2: {sig['rsi2']:.2f}  |  EMA200: {sig['ema200']:.0f}\n"
                         f"Spot: {sig['spot']:.0f}\n"
                         f"Reason: {sig['reason']}"
                     )
