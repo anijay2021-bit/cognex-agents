@@ -26,6 +26,7 @@ RSI2_LOTS        = settings.rsi2_lots
 RSI2_QUANTITY    = NIFTY_LOT_SIZE * RSI2_LOTS  # 650
 RSI_PERIOD       = 2
 EMA_PERIOD       = 200
+TREND_FILTER_TYPE = "EMA"      # "EMA" or "SMA" - daily trend filter (dashboard-controlled)
 RSI_OVERSOLD     = 5
 RSI_OVERBOUGHT   = 95
 TIMEFRAME        = 5          # minutes — kept for backward compatibility
@@ -48,7 +49,7 @@ class RSI2Scanner:
 
         # Floor current time to nearest 5-min bucket
         current_bucket = now.replace(second=0, microsecond=0)
-        current_bucket = current_bucket.replace(minute=(now.minute // 5) * 5)
+        current_bucket = current_bucket.replace(minute=(now.minute // TIMEFRAME) * TIMEFRAME)
 
         # Return cached data if we already fetched this bucket
         if (self._cached_df is not None and
@@ -73,7 +74,7 @@ class RSI2Scanner:
 
             data = {
                 "symbol":      "NSE:NIFTY50-INDEX",
-                "resolution":  "5",          # 5-minute candles
+                "resolution":  str(TIMEFRAME),          # 5-minute candles
                 "date_format": "1",
                 "range_from":  from_date,
                 "range_to":    today_str,
@@ -159,7 +160,10 @@ class RSI2Scanner:
         if dfx is None or len(dfx) < EMA_PERIOD:
             logger.warning("RSI2: not enough daily candles for EMA200")
             return None
-        ema = dfx["close"].astype(float).ewm(span=EMA_PERIOD, adjust=False).mean().iloc[-1]
+        if TREND_FILTER_TYPE.upper() == "SMA":
+            ema = dfx["close"].astype(float).rolling(window=EMA_PERIOD).mean().iloc[-1]
+        else:
+            ema = dfx["close"].astype(float).ewm(span=EMA_PERIOD, adjust=False).mean().iloc[-1]
         self._ema200_cache = round(float(ema), 2)
         self._ema200_date = today
         logger.info(f"RSI2 daily EMA200 refreshed: {self._ema200_cache}")
