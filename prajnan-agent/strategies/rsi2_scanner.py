@@ -26,7 +26,7 @@ RSI2_LOTS        = settings.rsi2_lots
 RSI2_QUANTITY    = NIFTY_LOT_SIZE * RSI2_LOTS  # 650
 RSI_PERIOD       = 2
 EMA_PERIOD       = 200
-TREND_FILTER_TYPE = "EMA"      # "EMA" or "SMA" - daily trend filter (dashboard-controlled)
+TREND_FILTER_TYPE = "SMA"      # "EMA" or "SMA" - daily trend filter (dashboard-controlled)
 RSI_OVERSOLD     = 5
 RSI_OVERBOUGHT   = 95
 TIMEFRAME        = 5          # minutes — kept for backward compatibility
@@ -205,12 +205,12 @@ class RSI2Scanner:
         last_time  = df.iloc[last_idx]["timestamp"]
 
         if last_ema is None or np.isnan(last_rsi):
-            logger.debug(f"RSI2: NaN values — RSI:{last_rsi} EMA:{last_ema}")
+            logger.debug(f"RSI2: NaN values — RSI:{last_rsi} {TREND_FILTER_TYPE.upper()}:{last_ema}")
             return None
 
         logger.info(
             f"RSI2 Check | Spot:{last_close:.2f} "
-            f"EMA200:{last_ema:.2f} RSI2:{last_rsi:.2f} "
+            f"{TREND_FILTER_TYPE.upper()}200:{last_ema:.2f} RSI2:{last_rsi:.2f} "
             f"Time:{last_time.strftime('%H:%M')}"
         )
 
@@ -220,7 +220,7 @@ class RSI2Scanner:
         if last_close > last_ema and last_rsi < RSI_OVERSOLD:
             symbol = self._build_option_symbol(atm, "CE")
             logger.info(
-                f"RSI2 CE SIGNAL — Spot:{last_close} > EMA:{last_ema:.2f} "
+                f"RSI2 CE SIGNAL — Spot:{last_close} > {TREND_FILTER_TYPE.upper()}:{last_ema:.2f} "
                 f"RSI:{last_rsi:.2f} < {RSI_OVERSOLD}"
             )
             return {
@@ -237,7 +237,7 @@ class RSI2Scanner:
                 "rsi2":        round(last_rsi, 2),
                 "spot":        last_close,
                 "reasoning": (
-                    f"RSI2 bullish bounce: Nifty {last_close:.2f} > 200EMA {last_ema:.2f}. "
+                    f"RSI2 bullish bounce: Nifty {last_close:.2f} > 200{TREND_FILTER_TYPE.upper()} {last_ema:.2f}. "
                     f"RSI(2)={last_rsi:.2f} < {RSI_OVERSOLD} — oversold. BUY {atm}CE."
                 )
             }
@@ -246,7 +246,7 @@ class RSI2Scanner:
         if last_close < last_ema and last_rsi > RSI_OVERBOUGHT:
             symbol = self._build_option_symbol(atm, "PE")
             logger.info(
-                f"RSI2 PE SIGNAL — Spot:{last_close} < EMA:{last_ema:.2f} "
+                f"RSI2 PE SIGNAL — Spot:{last_close} < {TREND_FILTER_TYPE.upper()}:{last_ema:.2f} "
                 f"RSI:{last_rsi:.2f} > {RSI_OVERBOUGHT}"
             )
             return {
@@ -263,13 +263,13 @@ class RSI2Scanner:
                 "rsi2":        round(last_rsi, 2),
                 "spot":        last_close,
                 "reasoning": (
-                    f"RSI2 bearish bounce: Nifty {last_close:.2f} < 200EMA {last_ema:.2f}. "
+                    f"RSI2 bearish bounce: Nifty {last_close:.2f} < 200{TREND_FILTER_TYPE.upper()} {last_ema:.2f}. "
                     f"RSI(2)={last_rsi:.2f} > {RSI_OVERBOUGHT} — overbought. BUY {atm}PE."
                 )
             }
 
         logger.debug(
-            f"RSI2: No signal — RSI:{last_rsi:.2f} EMA:{last_ema:.2f} Spot:{last_close:.2f}"
+            f"RSI2: No signal — RSI:{last_rsi:.2f} {TREND_FILTER_TYPE.upper()}:{last_ema:.2f} Spot:{last_close:.2f}"
         )
         return None
 
