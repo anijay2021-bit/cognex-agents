@@ -117,6 +117,37 @@ def monitor_exits(client_id, token):
             telegram(f"18SMA EXIT (Target): {t['symbol']} @ {ltp} pnl Rs.{pnl}")
 
 
+def eod_squareoff(client_id, token):
+    """Force-close any still-open trades once market hours end, so nothing carries overnight."""
+    opens = store.open_trades()
+    if not opens:
+        return
+    symbols = [t["symbol"] for t in opens]
+    prices = {}
+    try:
+        url = "https://api-t1.fyers.in/data/quotes"
+        headers = {"Authorization": f"{client_id}:{token}"}
+        resp = requests.get(url, headers=headers, params={"symbols": ",".join(symbols)}, timeout=10)
+        j = resp.json()
+        if j.get("s") == "ok":
+            for d in j.get("d", []):
+                v = d.get("v", {})
+                if "lp" in v:
+                    prices[d["n"]] = v["lp"]
+    except Exception:
+        pass
+    now_hm = dt.datetime.now(IST).strftime("%H:%M")
+    for t in opens:
+        ltp = prices.get(t["symbol"])
+        if ltp is None:
+            if now_hm < "15:40":
+                continue  # quotes not ready yet, retry next cycle
+            ltp = t["entry_price"]  # last resort fallback so nothing lingers open forever
+        pnl = store.close_trade(t["id"], ltp, dt.datetime.now(IST).isoformat(), "EOD SQUAREOFF")
+        log(f"EXIT EOD {t['symbol']} @ {ltp} pnl {pnl}")
+        telegram(f"18SMA EXIT (EOD Squareoff): {t['symbol']} @ {ltp} pnl Rs.{pnl}")
+
+
 def main():
     store.init()
     log(f"18SMA Agent started (mode={settings.MODE}) timeframe={settings.TIMEFRAME}min")
@@ -126,17 +157,17 @@ def main():
         f"Timeframe: {settings.TIMEFRAME}min | SMA: {settings.SMA_PERIOD}")
     while True:
         try:
-            if not in_market_hours():
-                time.sleep(30)
-                continue
             token = json.load(open(settings.FYERS_TOKEN_PATH))["token"]
-            fy = fyers()
-            if store.today_pnl() <= -abs(settings.DAILY_LOSS_LIMIT):
-                log("Daily loss limit hit - skipping new entries")
+            if in_market_hours():
+                fy = fyers()
+                if store.today_pnl() <= -abs(settings.DAILY_LOSS_LIMIT):
+                    log("Daily loss limit hit - skipping new entries")
+                else:
+                    for inst in INSTRUMENTS:
+                        try_entry(inst, fy, token)
+                monitor_exits(settings.FYERS_CLIENT_ID, token)
             else:
-                for inst in INSTRUMENTS:
-                    try_entry(inst, fy, token)
-            monitor_exits(settings.FYERS_CLIENT_ID, token)
+                eod_squareoff(settings.FYERS_CLIENT_ID, token)
         except Exception as e:
             log(f"Loop error: {e}")
         time.sleep(settings.SCAN_EVERY_SEC)
