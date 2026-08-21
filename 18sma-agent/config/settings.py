@@ -17,7 +17,8 @@ LOG_DIR         = BASE / "logs"
 TIMEFRAME    = 5         # minutes: 1,3,5,10,15,30,60 - same timeframe drives both SMA and candles
 SMA_PERIOD   = 18
 
-SL_POINTS    = 15.0      # stop loss, in points of option price
+SL_MODE      = "POINTS" # "POINTS" | "PERCENT"
+SL_VALUE     = 15.0     # meaning depends on SL_MODE (points, or % of option price)
 TARGET_MODE  = "RR"      # "RR" | "POINTS" | "PERCENT"
 TARGET_VALUE = 2.0       # meaning depends on TARGET_MODE
 

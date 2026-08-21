@@ -35,9 +35,19 @@ def in_market_hours():
     return settings.MARKET_OPEN <= now <= settings.MARKET_CLOSE
 
 
+def sl_price(entry):
+    if settings.SL_MODE == "PERCENT":
+        return round(entry * (1 - settings.SL_VALUE / 100), 2)
+    return round(entry - settings.SL_VALUE, 2)
+
+def _risk_points(entry):
+    if settings.SL_MODE == "PERCENT":
+        return entry * settings.SL_VALUE / 100
+    return settings.SL_VALUE
+
 def target_price(entry):
     if settings.TARGET_MODE == "RR":
-        return round(entry + settings.SL_POINTS * settings.TARGET_VALUE, 2)
+        return round(entry + _risk_points(entry) * settings.TARGET_VALUE, 2)
     if settings.TARGET_MODE == "POINTS":
         return round(entry + settings.TARGET_VALUE, 2)
     return round(entry * (1 + settings.TARGET_VALUE / 100), 2)
@@ -59,7 +69,7 @@ def try_entry(inst, fy, token):
     if not entry:
         return
     qty = inst["lots"] * inst["lot_size"]
-    sl = round(entry - settings.SL_POINTS, 2)
+    sl = sl_price(entry)
     tgt = target_price(entry)
     reason = (f"18SMA {side} breakout: {inst['name']} 2-candle "
               f"{'high' if side == 'CE' else 'low'} break, {settings.TIMEFRAME}min TF. "
@@ -95,7 +105,7 @@ def monitor_exits(client_id, token):
         ltp = prices.get(t["symbol"])
         if ltp is None:
             continue
-        sl = round(t["entry_price"] - settings.SL_POINTS, 2)
+        sl = sl_price(t["entry_price"])
         tgt = target_price(t["entry_price"])
         if ltp <= sl:
             pnl = store.close_trade(t["id"], ltp, dt.datetime.now(IST).isoformat(), "SL HIT")
