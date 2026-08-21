@@ -80,6 +80,7 @@ PM = f"{BASE}/prajnan-agent/main.py"
 NS = f"{BASE}/nitin-agent/config/settings.py"
 A2 = f"{BASE}/prajnan-agent2/strategies/rsi2_scanner.py"
 PPE = f"{BASE}/pocket-pivot-agent/config.env"
+S18 = f"{BASE}/18sma-agent/config/settings.py"
 
 PARAMS = {
   # ── TRISHUL ──────────────────────────────────────────────────────────────
@@ -139,6 +140,18 @@ PARAMS = {
     "pp_scan_from":     {"label":"Scan from","desc":"Start scanning at this time IST (Mon-Fri)","group":"Pocket Pivot","section":"Timing","dot":"dot-blue","type":"time","default":"09:15","unit":"","svc":"pocket-pivot-agent","file_map": (PPE,"SCAN_FROM","quoted")},
     "pp_no_scan_after": {"label":"Stop scanning after","desc":"No scans after this time IST","group":"Pocket Pivot","section":"Timing","dot":"dot-blue","type":"time","default":"15:29","unit":"","svc":"pocket-pivot-agent","file_map": (PPE,"NO_SCAN_AFTER","quoted")},
     "pp_interval":      {"label":"Scan interval","desc":"Seconds between Chartink scans","group":"Pocket Pivot","section":"Timing","dot":"dot-blue","type":"int","default":60,"unit":"sec","svc":"pocket-pivot-agent","file_map": (PPE,"INTERVAL_SEC","simple")},
+    # --- 18SMA (18 SMA + 2-Candle Breakout) ---
+    "s18_timeframe":        {"label":"Timeframe","desc":"Candle/SMA timeframe (minutes) - drives both SMA and candles","group":"18SMA","section":"Signal","dot":"dot-teal","type":"select","opts":[1,3,5,10,15,30,60],"default":5,"unit":"min","svc":"18sma-agent","file_map": (S18,"TIMEFRAME","simple")},
+    "s18_sl_points":        {"label":"Stop loss (points)","desc":"Fixed SL in points of option price","group":"18SMA","section":"Target & stop loss","dot":"dot-amber","type":"float","default":15.0,"unit":"pts","svc":"18sma-agent","file_map": (S18,"SL_POINTS","simple")},
+    "s18_target_mode":      {"label":"Target mode","desc":"RR = risk:reward multiple, POINTS = fixed points, PERCENT = pct of option price","group":"18SMA","section":"Target & stop loss","dot":"dot-amber","type":"select","opts":["RR","POINTS","PERCENT"],"default":"RR","unit":"","svc":"18sma-agent","file_map": (S18,"TARGET_MODE","quoted")},
+    "s18_target_value":     {"label":"Target value","desc":"Meaning depends on target mode (multiple / points / percent)","group":"18SMA","section":"Target & stop loss","dot":"dot-amber","type":"float","default":2.0,"unit":"","svc":"18sma-agent","file_map": (S18,"TARGET_VALUE","simple")},
+    "s18_daily_loss":       {"label":"Daily loss limit","desc":"Stop trading if daily loss exceeds this","group":"18SMA","section":"Risk management","dot":"dot-purple","type":"int","default":20000,"unit":"INR","svc":"18sma-agent","file_map": (S18,"DAILY_LOSS_LIMIT","simple")},
+    "s18_nifty_lots":       {"label":"Nifty lots","desc":"Lots per Nifty trade","group":"18SMA","section":"Risk management","dot":"dot-purple","type":"int","default":1,"unit":"lots","svc":"18sma-agent","file_map": (S18,"NIFTY_LOTS","simple")},
+    "s18_nifty_lot_size":   {"label":"Nifty lot size","desc":"Units per Nifty lot","group":"18SMA","section":"Risk management","dot":"dot-purple","type":"int","default":65,"unit":"","svc":"18sma-agent","file_map": (S18,"NIFTY_LOT_SIZE","simple")},
+    "s18_banknifty_lots":   {"label":"BankNifty lots","desc":"Lots per BankNifty trade","group":"18SMA","section":"Risk management","dot":"dot-purple","type":"int","default":1,"unit":"lots","svc":"18sma-agent","file_map": (S18,"BANKNIFTY_LOTS","simple")},
+    "s18_banknifty_lot_size": {"label":"BankNifty lot size","desc":"Units per BankNifty lot","group":"18SMA","section":"Risk management","dot":"dot-purple","type":"int","default":35,"unit":"","svc":"18sma-agent","file_map": (S18,"BANKNIFTY_LOT_SIZE","simple")},
+    "s18_sensex_lots":      {"label":"Sensex lots","desc":"Lots per Sensex trade","group":"18SMA","section":"Risk management","dot":"dot-purple","type":"int","default":1,"unit":"lots","svc":"18sma-agent","file_map": (S18,"SENSEX_LOTS","simple")},
+    "s18_sensex_lot_size":  {"label":"Sensex lot size","desc":"Units per Sensex lot","group":"18SMA","section":"Risk management","dot":"dot-purple","type":"int","default":20,"unit":"","svc":"18sma-agent","file_map": (S18,"SENSEX_LOT_SIZE","simple")},
 }
 
 # ── Endpoints ─────────────────────────────────────────────────────────────────
