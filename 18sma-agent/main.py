@@ -40,10 +40,12 @@ def sl_price(entry):
         return round(entry * (1 - settings.SL_VALUE / 100), 2)
     return round(entry - settings.SL_VALUE, 2)
 
+
 def _risk_points(entry):
     if settings.SL_MODE == "PERCENT":
         return entry * settings.SL_VALUE / 100
     return settings.SL_VALUE
+
 
 def target_price(entry):
     if settings.TARGET_MODE == "RR":
@@ -57,9 +59,11 @@ def try_entry(inst, fy, token):
     if store.n_open(inst["name"]) > 0:
         return
     df = fetch_candles(fy, inst["index"])
-    side = check_breakout(df)
+    side, signal_id = check_breakout(df)
     if not side:
         return
+    if store.signal_traded(inst["name"], signal_id):
+        return  # already traded this exact 2-candle setup once -- one signal, one trade
     chain = fetch_atm_option(settings.FYERS_CLIENT_ID, token, inst["index"])
     if not chain:
         log(f"{inst['name']}: {side} breakout but option chain fetch failed")
@@ -71,16 +75,17 @@ def try_entry(inst, fy, token):
     qty = inst["lots"] * inst["lot_size"]
     sl = sl_price(entry)
     tgt = target_price(entry)
-    reason = (f"18SMA {side} breakout: {inst['name']} 2-candle "
-              f"{'high' if side == 'CE' else 'low'} break, {settings.TIMEFRAME}min TF. "
+    reason = (f"18SMA {side} breakout: {inst['name']} price crossed the "
+              f"{'high' if side == 'CE' else 'low'} of the 2-candle setup "
+              f"(signal {signal_id}), {settings.TIMEFRAME}min TF. "
               f"Entry {entry} SL {sl} Target {tgt}.")
     store.open_trade(
         order_id=f"18SMA-PAPER-{inst['name']}-{int(time.time())}",
         symbol=leg["symbol"], underlying=inst["name"], strike=leg.get("strike_price", 0),
         expiry=chain["expiry"], direction="BUY", qty=qty,
         entry_price=entry, entry_time=dt.datetime.now(IST).isoformat(),
-        sl_price=sl, reason=reason)
-    log(f"ENTRY {inst['name']} {side} {leg['symbol']} @ {entry} qty {qty}")
+        sl_price=sl, reason=reason, signal_id=signal_id)
+    log(f"ENTRY {inst['name']} {side} {leg['symbol']} @ {entry} qty {qty} signal={signal_id}")
     telegram(
         f"18SMA Signal\nAction: TRADE\nSymbol: {leg['symbol']}\nDirection: BUY\n"
         f"Entry: {entry}  SL: {sl}  Target: {tgt}\nQty: {qty}\n{reason}")
