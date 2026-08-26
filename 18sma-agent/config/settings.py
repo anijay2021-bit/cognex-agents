@@ -7,34 +7,34 @@ MODE    = "PAPER"                      # PAPER | LIVE (live not implemented deli
 ACCOUNT = "Kiran - r14592"
 
 FYERS_CLIENT_ID  = "FX2G3F1GB9-100"
-FYERS_TOKEN_PATH = "/home/anijay2021/prajnan-agent/config/fyers_token.json"
+FYERS_TOKEN_PATH = "/home/anijay2021/fyers-auth-service/config/fyers_token.json"
 
 TELEGRAM_CONFIG = BASE / "config" / "telegram_config.json"
 DB_PATH         = BASE / "cognex_agent.db"
 LOG_DIR         = BASE / "logs"
 
 # ---- Strategy: 18 SMA + 2-candle breakout (dashboard-controlled) ----
-TIMEFRAME    = 5         # minutes: 1,3,5,10,15,30,60 - same timeframe drives both SMA and candles
+TIMEFRAME    = 30         # minutes: 1,3,5,10,15,30,60 - same timeframe drives both SMA and candles
 SMA_PERIOD   = 18
 
-SL_MODE      = "POINTS" # "POINTS" | "PERCENT"
-SL_VALUE     = 15.0     # meaning depends on SL_MODE (points, or % of option price)
-TARGET_MODE  = "RR"      # "RR" | "POINTS" | "PERCENT"
-TARGET_VALUE = 2.0       # meaning depends on TARGET_MODE
+SL_MODE      = "PERCENT" # "POINTS" | "PERCENT"
+SL_VALUE     = 30.0     # meaning depends on SL_MODE (points, or % of option price)
+TARGET_MODE  = "PERCENT"      # "RR" | "POINTS" | "PERCENT"
+TARGET_VALUE = 30.0       # meaning depends on TARGET_MODE
 
 DAILY_LOSS_LIMIT = 20000.0
 
 # ---- Instruments (dashboard-controlled per-instrument lots/lot size) ----
 NIFTY_INDEX      = "NSE:NIFTY50-INDEX"
-NIFTY_LOTS       = 1
+NIFTY_LOTS       = 10
 NIFTY_LOT_SIZE   = 65
 
 BANKNIFTY_INDEX      = "NSE:NIFTYBANK-INDEX"
-BANKNIFTY_LOTS       = 1
+BANKNIFTY_LOTS       = 10
 BANKNIFTY_LOT_SIZE   = 30
 
 SENSEX_INDEX      = "BSE:SENSEX-INDEX"
-SENSEX_LOTS       = 1
+SENSEX_LOTS       = 10
 SENSEX_LOT_SIZE   = 20
 
 # ---- Schedule (IST) ----
