@@ -41,51 +41,42 @@ def fetch_candles(fy, symbol, lookback_days=5):
 
 
 def check_breakout(df, max_lookback=MAX_LOOKBACK_CANDLES):
-    """Returns (side, signal_id) where side is 'CE', 'PE', or None.
-
-    Setup: the most recent 2 consecutive *completed* candles (p1, p2) that are
-    both same-colour and both close on the same side of the 18-SMA (e.g. the
-    "2nd red candle below the 18-SMA"). That setup stays armed -- irrespective
-    of how many further candles (3rd, 4th, 5th, ...) pass -- until either:
-      * the current price crosses p2's high (bull) / p1&p2's combined low (bear)
-        -> a signal fires, or
-      * a fresher qualifying pair forms later, which supersedes it.
-
-    signal_id uniquely identifies the (p1, p2) pair so the caller can enforce
-    "one trade per signal per instrument" even across restarts (it's checked
-    against the trades DB, not just in-memory state).
+    """One trade per SMA-crossover regime. Returns (side, signal_id) or (None, None).
+    signal_id is derived from the crossover candle's own timestamp so it stays
+    constant for the whole regime -- store.signal_traded() blocks re-entry until
+    price genuinely closes back on the other side of the SMA (new crossover).
     """
-    if df is None or len(df) < settings.SMA_PERIOD + 3:
-        return None, None
     df = df.copy()
     df["sma18"] = df["close"].rolling(settings.SMA_PERIOD).mean()
-
-    cur = df.iloc[-1]  # current / still-forming candle -- live price we test against
+    cur = df.iloc[-1]
     n = len(df)
     lo = max(1, n - 1 - max_lookback)
-
-    for i in range(n - 2, lo - 1, -1):
-        p1, p2 = df.iloc[i - 1], df.iloc[i]
-        if pd.isna(p1["sma18"]) or pd.isna(p2["sma18"]):
-            break  # ran out of valid SMA history within the lookback window
-
-        bull = (p1["close"] > p1["sma18"] and p2["close"] > p2["sma18"]
-                and p1["close"] > p1["open"] and p2["close"] > p2["open"])
-        if bull:
-            sig = f"CE-{df.index[i-1].isoformat()}-{df.index[i].isoformat()}"
-            if cur["high"] > max(p1["high"], p2["high"]):
-                return "CE", sig
-            return None, None  # setup found but not yet broken -- keep watching it
-
-        bear = (p1["close"] < p1["sma18"] and p2["close"] < p2["sma18"]
-                and p1["close"] < p1["open"] and p2["close"] < p2["open"])
-        if bear:
-            sig = f"PE-{df.index[i-1].isoformat()}-{df.index[i].isoformat()}"
-            if cur["low"] < min(p1["low"], p2["low"]):
-                return "PE", sig
-            return None, None  # setup found but not yet broken -- keep watching it
-
-    return None, None  # no qualifying pair found within the lookback window
+    closed = df.iloc[lo:n - 1].dropna(subset=["sma18"])
+    if len(closed) < 2:
+        return None, None
+    above = closed["close"] > closed["sma18"]
+    cross_pos = None
+    for i in range(len(closed) - 1, 0, -1):
+        if above.iloc[i] != above.iloc[i - 1]:
+            cross_pos = i
+            break
+    if cross_pos is None:
+        return None, None
+    cross_candle = closed.iloc[cross_pos]
+    if cross_pos + 1 >= len(closed):
+        return None, None
+    trig_candle = closed.iloc[cross_pos + 1]
+    bull = bool(above.iloc[cross_pos])
+    signal_id = f"{'CE' if bull else 'PE'}-cross-{closed.index[cross_pos].isoformat()}"
+    if bull:
+        trig_high = max(cross_candle["high"], trig_candle["high"])
+        if cur["high"] > trig_high:
+            return "CE", signal_id
+    else:
+        trig_low = min(cross_candle["low"], trig_candle["low"])
+        if cur["low"] < trig_low:
+            return "PE", signal_id
+    return None, None
 
 
 def fetch_atm_option(client_id, token, index_symbol):
