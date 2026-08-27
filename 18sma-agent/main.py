@@ -5,7 +5,7 @@ from fyers_apiv3 import fyersModel
 
 import store
 from config import settings
-from strategy import INSTRUMENTS, fetch_candles, check_breakout, fetch_atm_option
+from strategy import INSTRUMENTS, fetch_candles, check_breakout, check_option_confirmation, fetch_atm_option
 
 IST = ZoneInfo(settings.IST)
 
@@ -59,7 +59,7 @@ def try_entry(inst, fy, token):
     if store.n_open(inst["name"]) > 0:
         return
     df = fetch_candles(fy, inst["index"])
-    side, signal_id = check_breakout(df)
+    side, signal_id, cross_time, trig_time = check_breakout(df)
     if not side:
         return
     if store.signal_traded(inst["name"], signal_id):
@@ -71,6 +71,11 @@ def try_entry(inst, fy, token):
     leg = chain[side]
     entry = leg["ltp"]
     if not entry:
+        return
+    df_opt = fetch_candles(fy, leg["symbol"])
+    if not check_option_confirmation(df_opt, cross_time, trig_time, side):
+        log(f"{inst['name']}: spot {side} breakout confirmed but option {leg['symbol']} "
+            f"hasn't broken its own 2-candle level yet -- waiting (signal {signal_id})")
         return
     qty = inst["lots"] * inst["lot_size"]
     sl = sl_price(entry)

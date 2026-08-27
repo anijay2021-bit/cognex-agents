@@ -41,10 +41,10 @@ def fetch_candles(fy, symbol, lookback_days=5):
 
 
 def check_breakout(df, max_lookback=MAX_LOOKBACK_CANDLES):
-    """One trade per SMA-crossover regime. Returns (side, signal_id) or (None, None).
-    signal_id is derived from the crossover candle's own timestamp so it stays
-    constant for the whole regime -- store.signal_traded() blocks re-entry until
-    price genuinely closes back on the other side of the SMA (new crossover).
+    """One trade per SMA-crossover regime. Returns (side, signal_id, cross_time, trig_time)
+    or (None, None, None, None). cross_time/trig_time are the timestamps of the
+    two reference candles so the option's own price can be checked at the same
+    two candles (see check_option_confirmation).
     """
     df = df.copy()
     df["sma18"] = df["close"].rolling(settings.SMA_PERIOD).mean()
@@ -53,7 +53,7 @@ def check_breakout(df, max_lookback=MAX_LOOKBACK_CANDLES):
     lo = max(1, n - 1 - max_lookback)
     closed = df.iloc[lo:n - 1].dropna(subset=["sma18"])
     if len(closed) < 2:
-        return None, None
+        return None, None, None, None
     above = closed["close"] > closed["sma18"]
     cross_pos = None
     for i in range(len(closed) - 1, 0, -1):
@@ -61,22 +61,45 @@ def check_breakout(df, max_lookback=MAX_LOOKBACK_CANDLES):
             cross_pos = i
             break
     if cross_pos is None:
-        return None, None
+        return None, None, None, None
     cross_candle = closed.iloc[cross_pos]
     if cross_pos + 1 >= len(closed):
-        return None, None
+        return None, None, None, None
     trig_candle = closed.iloc[cross_pos + 1]
+    cross_time = closed.index[cross_pos]
+    trig_time = closed.index[cross_pos + 1]
     bull = bool(above.iloc[cross_pos])
-    signal_id = f"{'CE' if bull else 'PE'}-cross-{closed.index[cross_pos].isoformat()}"
+    signal_id = f"{'CE' if bull else 'PE'}-cross-{cross_time.isoformat()}"
     if bull:
         trig_high = max(cross_candle["high"], trig_candle["high"])
         if cur["high"] > trig_high:
-            return "CE", signal_id
+            return "CE", signal_id, cross_time, trig_time
     else:
         trig_low = min(cross_candle["low"], trig_candle["low"])
         if cur["low"] < trig_low:
-            return "PE", signal_id
-    return None, None
+            return "PE", signal_id, cross_time, trig_time
+    return None, None, None, None
+
+
+def check_option_confirmation(df_opt, cross_time, trig_time, side):
+    """Mirror the spot breakout test on the option's own price. At the SAME two
+    candle timestamps as the spot signal, has the option premium ALSO cleared
+    its own 2-candle extreme in the same direction? Returns True/False.
+    """
+    if df_opt is None or len(df_opt) < 2:
+        return False
+    cur = df_opt.iloc[-1]
+    closed = df_opt.iloc[:-1]
+    if cross_time not in closed.index or trig_time not in closed.index:
+        return False
+    c1 = closed.loc[cross_time]
+    c2 = closed.loc[trig_time]
+    if side == "CE":
+        trig_high = max(c1["high"], c2["high"])
+        return bool(cur["high"] > trig_high)
+    else:
+        trig_low = min(c1["low"], c2["low"])
+        return bool(cur["low"] < trig_low)
 
 
 def fetch_atm_option(client_id, token, index_symbol):
