@@ -39,6 +39,16 @@ AGENTS = {
         "broker_data":  "Fyers",
         "broker_exec":  "Paper",
     },
+    "vwap": {
+        "display_name": "VWAP",
+        "account": "Kiran - r14592",
+        "service": "vwap-agent",
+        "db": f"{BASE}/vwap-agent/cognex_agent.db",
+        "log": f"{BASE}/vwap-agent/logs/vwap.log",
+        "strategies": ["VWAP Mean Reversion (3-tier)"],
+        "broker_data": "Fyers",
+        "broker_exec": "Paper",
+    },
     "pocketpivot": {
         "display_name": "Pocket Pivot",
         "account":      "Kiran - alerts only",

@@ -293,7 +293,7 @@ select.si{text-align:left;width:160px;cursor:pointer}
         <button onclick="clearFilters()" style="height:32px;padding:0 12px;border-radius:7px;border:1px solid #e2e8f0;background:#f8fafc;color:#64748b;font-size:13px;cursor:pointer">Clear</button>
       </div>
       <div style="margin-left:auto;display:flex;gap:6px">
-        <div class="tt active" id="ttpn" onclick="setTT('nitin',this)">Nitin</div><div class="tt" id="ttp18" onclick="setTT('sma18',this)">18SMA</div>
+        <div class="tt active" id="ttpn" onclick="setTT('nitin',this)">Nitin</div><div class="tt" id="ttp18" onclick="setTT('sma18',this)">18SMA</div><div class="tt" id="ttpv" onclick="setTT('vwap',this)">VWAP</div>
       </div>
     </div>
   </div>
@@ -555,13 +555,13 @@ const GROUPS=[
   {id:'prajnan_cal',label:'Prajñān — Calendar Spread'},
   {id:'nitin',label:'Nitin - Swing Setups'},
   {id:'pocketpivot',label:'Pocket Pivot - Screener'},
-  {id:'sma18',label:'18SMA — Breakout Strategy'},
+  {id:'sma18',label:'18SMA — Breakout Strategy'},{id:'vwap',label:'VWAP — Mean Reversion'},
 ];
 const GMAP={
   prajnan_cal:['c_lots','c_sl_candle','c_flip_sl','c_max_flips','c_roll_exit','c_roll_entry','c_monthly_exit','c_skip_resell','c_hedge','c_hedge_ce','c_hedge_pe','c_daily_loss'],
   nitin:['n_mode','n_capital','n_risk_pct','n_max_alloc','n_max_stop','n_max_positions','n_min_turnover','n_scan_time','n_monitor_min','n_signal_valid'],
   pocketpivot:['pp_scan_from','pp_no_scan_after','pp_interval'],
-  sma18:['s18_timeframe','s18_sl_mode','s18_sl_value','s18_target_mode','s18_target_value','s18_daily_loss','s18_nifty_lots','s18_nifty_lot_size','s18_banknifty_lots','s18_banknifty_lot_size','s18_sensex_lots','s18_sensex_lot_size'],
+  sma18:['s18_timeframe','s18_sl_mode','s18_sl_value','s18_target_mode','s18_target_value','s18_daily_loss','s18_nifty_lots','s18_nifty_lot_size','s18_banknifty_lots','s18_banknifty_lot_size','s18_sensex_lots','s18_sensex_lot_size'],vwap:['vwap_timeframe','vwap_sl_buffer','vwap_daily_loss','vwap_nifty_lots','vwap_nifty_lot_size','vwap_banknifty_lots','vwap_banknifty_lot_size','vwap_sensex_lots','vwap_sensex_lot_size'],
 };
 
 async function loadCfg(){

@@ -81,6 +81,7 @@ NS = f"{BASE}/nitin-agent/config/settings.py"
 A2 = f"{BASE}/prajnan-agent2/strategies/rsi2_scanner.py"
 PPE = f"{BASE}/pocket-pivot-agent/config.env"
 S18 = f"{BASE}/18sma-agent/config/settings.py"
+VWAP = f"{BASE}/vwap-agent/config/settings.py"
 
 PARAMS = {
   # ── TRISHUL ──────────────────────────────────────────────────────────────
@@ -153,6 +154,17 @@ PARAMS = {
     "s18_banknifty_lot_size": {"label":"BankNifty lot size","desc":"Units per BankNifty lot","group":"18SMA","section":"Risk management","dot":"dot-purple","type":"int","default":30,"unit":"","svc":"18sma-agent","file_map": (S18,"BANKNIFTY_LOT_SIZE","simple")},
     "s18_sensex_lots":      {"label":"Sensex lots","desc":"Lots per Sensex trade","group":"18SMA","section":"Risk management","dot":"dot-purple","type":"int","default":1,"unit":"lots","svc":"18sma-agent","file_map": (S18,"SENSEX_LOTS","simple")},
     "s18_sensex_lot_size":  {"label":"Sensex lot size","desc":"Units per Sensex lot","group":"18SMA","section":"Risk management","dot":"dot-purple","type":"int","default":20,"unit":"","svc":"18sma-agent","file_map": (S18,"SENSEX_LOT_SIZE","simple")},
+    # ---- VWAP ----
+    "vwap_timeframe": {"label":"Timeframe","desc":"Candle timeframe (minutes) for VWAP+SD bands","group":"VWAP","section":"Signal","dot":"dot-blue","type":"select","opts":["1","3","5","10","15","30","60"],"default":"5","unit":"min","svc":"vwap-agent","file_map": (VWAP,"TIMEFRAME","simple")},
+    "vwap_sl_buffer": {"label":"SL buffer","desc":"Stop loss = signal candle low - this buffer","group":"VWAP","section":"Target & stop loss","dot":"dot-amber","type":"float","default":5.0,"unit":"pts","svc":"vwap-agent","file_map": (VWAP,"SL_BUFFER_POINTS","simple")},
+    "vwap_daily_loss": {"label":"Daily loss limit","desc":"Stop trading if daily loss exceeds this","group":"VWAP","section":"Risk management","dot":"dot-purple","type":"int","default":20000,"unit":"INR","svc":"vwap-agent","file_map": (VWAP,"DAILY_LOSS_LIMIT","simple")},
+    "vwap_nifty_lots": {"label":"Nifty lots","desc":"Total lots per Nifty signal, split across 3 sub-positions","group":"VWAP","section":"Risk management","dot":"dot-purple","type":"int","default":3,"unit":"lots","svc":"vwap-agent","file_map": (VWAP,"NIFTY_LOTS","simple")},
+    "vwap_nifty_lot_size": {"label":"Nifty lot size","desc":"Units per Nifty lot","group":"VWAP","section":"Risk management","dot":"dot-purple","type":"int","default":65,"unit":"","svc":"vwap-agent","file_map": (VWAP,"NIFTY_LOT_SIZE","simple")},
+    "vwap_banknifty_lots": {"label":"BankNifty lots","desc":"Total lots per BankNifty signal, split across 3 sub-positions","group":"VWAP","section":"Risk management","dot":"dot-purple","type":"int","default":3,"unit":"lots","svc":"vwap-agent","file_map": (VWAP,"BANKNIFTY_LOTS","simple")},
+    "vwap_banknifty_lot_size": {"label":"BankNifty lot size","desc":"Units per BankNifty lot","group":"VWAP","section":"Risk management","dot":"dot-purple","type":"int","default":30,"unit":"","svc":"vwap-agent","file_map": (VWAP,"BANKNIFTY_LOT_SIZE","simple")},
+    "vwap_sensex_lots": {"label":"Sensex lots","desc":"Total lots per Sensex signal, split across 3 sub-positions","group":"VWAP","section":"Risk management","dot":"dot-purple","type":"int","default":3,"unit":"lots","svc":"vwap-agent","file_map": (VWAP,"SENSEX_LOTS","simple")},
+    "vwap_sensex_lot_size": {"label":"Sensex lot size","desc":"Units per Sensex lot","group":"VWAP","section":"Risk management","dot":"dot-purple","type":"int","default":20,"unit":"","svc":"vwap-agent","file_map": (VWAP,"SENSEX_LOT_SIZE","simple")},
+
 }
 
 # ── Endpoints ─────────────────────────────────────────────────────────────────

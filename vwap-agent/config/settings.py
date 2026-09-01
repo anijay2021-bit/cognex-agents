@@ -1,0 +1,36 @@
+
+from pathlib import Path
+
+BASE = Path(__file__).resolve().parent.parent
+IST = "Asia/Kolkata"
+
+MODE = "PAPER"
+ACCOUNT = "Kiran - r14592"
+
+FYERS_CLIENT_ID = "FX2G3F1GB9-100"
+FYERS_TOKEN_PATH = "/home/anijay2021/fyers-auth-service/config/fyers_token.json"
+
+TELEGRAM_CONFIG = BASE / "config" / "telegram_config.json"
+DB_PATH = BASE / "cognex_agent.db"
+LOG_DIR = BASE / "logs"
+
+TIMEFRAME = 5
+SL_BUFFER_POINTS = 5.0
+
+DAILY_LOSS_LIMIT = 20000.0
+
+NIFTY_INDEX = "NSE:NIFTY50-INDEX"
+NIFTY_LOTS = 3
+NIFTY_LOT_SIZE = 65
+
+BANKNIFTY_INDEX = "NSE:NIFTYBANK-INDEX"
+BANKNIFTY_LOTS = 3
+BANKNIFTY_LOT_SIZE = 30
+
+SENSEX_INDEX = "BSE:SENSEX-INDEX"
+SENSEX_LOTS = 3
+SENSEX_LOT_SIZE = 20
+
+MARKET_OPEN = "09:20"
+MARKET_CLOSE = "15:25"
+SCAN_EVERY_SEC = 30
