@@ -116,13 +116,20 @@ def monitor_exits(client_id, token):
         sl = t["sl_price"]
         tgt = t["target_price"]
         if sl is not None and ltp <= sl:
-            pnl = store.close_trade(t["id"], ltp, dt.datetime.now(IST).isoformat(), "SL HIT")
-            log(f"EXIT SL {t['symbol']} @ {ltp} pnl {pnl}")
-            telegram(f"VWAP EXIT (SL): {t['symbol']} @ {ltp} pnl Rs.{pnl}")
+            reason = "TRAILING SL HIT" if sl > t["entry_price"] else "SL HIT"
+            pnl = store.close_trade(t["id"], ltp, dt.datetime.now(IST).isoformat(), reason)
+            log(f"EXIT {reason} {t['symbol']} @ {ltp} pnl {pnl}")
+            telegram(f"VWAP EXIT ({reason}): {t['symbol']} @ {ltp} pnl Rs.{pnl}")
         elif tgt is not None and ltp >= tgt:
             pnl = store.close_trade(t["id"], ltp, dt.datetime.now(IST).isoformat(), "TARGET HIT")
             log(f"EXIT TARGET {t['symbol']} @ {ltp} pnl {pnl}")
             telegram(f"VWAP EXIT (Target): {t['symbol']} @ {ltp} pnl Rs.{pnl}")
+            sig = t.get("signal_id") or ""
+            if "-T" in sig:
+                base_id, _, tier = sig.rpartition("-T")
+                if tier in ("1", "2"):
+                    store.ratchet_sl(t["underlying"], base_id, tgt)
+                    log(f"Ratchet SL: {t['underlying']} {base_id} -> SL now {tgt} (T{tier} hit)")
 
 
 def eod_squareoff(client_id, token):

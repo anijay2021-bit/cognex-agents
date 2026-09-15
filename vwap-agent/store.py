@@ -85,3 +85,13 @@ def today_pnl():
             "SELECT pnl_rs FROM trades WHERE status='CLOSED' AND entry_time LIKE ?",
             (f"{today}%",)).fetchall()
         return sum(r["pnl_rs"] or 0 for r in rows)
+
+
+def ratchet_sl(underlying, base_signal_id, new_sl):
+    """Move SL up for every still-OPEN sub-position of this excursion (same
+    underlying leg, same base signal_id, any -T1/-T2/-T3 suffix). Used to
+    trail the stop to a just-hit target's price once a nearer target fires."""
+    with conn() as c:
+        c.execute(
+            "UPDATE trades SET sl_price=? WHERE status='OPEN' AND underlying=? AND signal_id LIKE ?",
+            (new_sl, underlying, f"{base_signal_id}-T%"))
