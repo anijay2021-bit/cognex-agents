@@ -94,12 +94,10 @@ def check_option_confirmation(df_opt, cross_time, trig_time, side):
         return False
     c1 = closed.loc[cross_time]
     c2 = closed.loc[trig_time]
-    if side == "CE":
-        trig_high = max(c1["high"], c2["high"])
-        return bool(cur["high"] > trig_high)
-    else:
-        trig_low = min(c1["low"], c2["low"])
-        return bool(cur["low"] < trig_low)
+    # We always BUY the option (CE or PE), so in both cases we want the
+    # option premium itself to break UP through its own 2-candle high.
+    trig_high = max(c1["high"], c2["high"])
+    return bool(cur["high"] > trig_high)
 
 
 def fetch_atm_option(client_id, token, index_symbol):
