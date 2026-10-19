@@ -41,6 +41,7 @@ async def filtered_trades(
     strategy:  Optional[str] = Query(None),
     status:    Optional[str] = Query(None),
     agent:     Optional[str] = Query(None),
+    index:     Optional[str] = Query(None),
 ):
     """Main trades endpoint — supports date range, strategy, and status filters."""
     result = {}
@@ -49,8 +50,8 @@ async def filtered_trades(
         db = cfg.get("db")
         if db:
             result[aid] = {
-                "trades":  await get_filtered_trades(db, date_from, date_to, strategy, status),
-                "summary": await get_trade_summary(db, date_from, date_to, strategy, status),
+                "trades":  await get_filtered_trades(db, date_from, date_to, strategy, status, index=index),
+                "summary": await get_trade_summary(db, date_from, date_to, strategy, status, index=index),
             }
     return result
 

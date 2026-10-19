@@ -296,6 +296,10 @@ select.si{text-align:left;width:160px;cursor:pointer}
           <option value="OPEN">Open</option>
         </select>
       </div>
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <label style="font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:.3px">Index</label>
+        <select id="f-index" class="si" style="width:120px;text-align:left"><option value="ALL">All</option><option value="NIFTY">Nifty</option><option value="BANKNIFTY">BankNifty</option><option value="SENSEX">Sensex</option></select>
+      </div>
       <div style="display:flex;gap:6px">
         <button onclick="applyFilters()" style="height:32px;padding:0 18px;border-radius:7px;border:1px solid #bfdbfe;background:#eff6ff;color:#1d4ed8;font-size:13px;font-weight:500;cursor:pointer">Search</button>
         <button onclick="clearFilters()" style="height:32px;padding:0 12px;border-radius:7px;border:1px solid #e2e8f0;background:#f8fafc;color:#64748b;font-size:13px;cursor:pointer">Clear</button>
@@ -400,6 +404,7 @@ function clearFilters(){
   initFilters();
   document.getElementById('f-strat').value='ALL';
   document.getElementById('f-status').value='ALL';
+  document.getElementById('f-index').value='ALL';
   applyFilters();
 }
 async function applyFilters(){
@@ -407,6 +412,7 @@ async function applyFilters(){
   const to=document.getElementById('f-to').value;
   const strat=document.getElementById('f-strat').value;
   const status=document.getElementById('f-status').value;
+  const idx=document.getElementById('f-index').value;
   const body=document.getElementById('tr-body');
   body.innerHTML='<tr><td colspan="11" class="es">Loading...</td></tr>';
   try{
@@ -414,6 +420,7 @@ async function applyFilters(){
     if(from)url+=`date_from=${from}&`;
     if(to)url+=`date_to=${to}&`;
     if(strat&&strat!=='ALL')url+=`strategy=${strat}&`;
+    if(idx&&idx!=='ALL')url+=`index=${idx}&`;
     if(status&&status!=='ALL')url+=`status=${status}&`;
     const r=await fetch(url);
     const data=await r.json();

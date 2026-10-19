@@ -66,14 +66,7 @@ async def get_recent_trades(db_path: str, limit: int = 20) -> list[dict]:
 
 async def get_today_pnl(db_path: str) -> dict:
     today = str(date.today())
-    rows = await _query(
-        db_path,
-        "SELECT * FROM daily_pnl WHERE date = ?",
-        (today,),
-    )
-    if rows:
-        return rows[0]
-    # If no row yet today, calculate from trades table
+    # Aggregate directly from trades table (daily_pnl table is unused)
     trades = await get_today_trades(db_path)
     wins   = [t for t in trades if (t.get("pnl_rs") or 0) > 0]
     losses = [t for t in trades if (t.get("pnl_rs") or 0) < 0]
@@ -91,10 +84,17 @@ async def get_today_pnl(db_path: str) -> dict:
 async def get_pnl_history(db_path: str, days: int = 30) -> list[dict]:
     return await _query(
         db_path,
-        """SELECT date, total_trades, winning_trades, losing_trades,
-                  gross_pnl_rs, net_pnl_rs, mode
-           FROM daily_pnl
-           ORDER BY date DESC LIMIT ?""",
+        """SELECT date(exit_time) AS date,
+                  COUNT(*) AS total_trades,
+                  SUM(CASE WHEN pnl_rs > 0 THEN 1 ELSE 0 END) AS winning_trades,
+                  SUM(CASE WHEN pnl_rs < 0 THEN 1 ELSE 0 END) AS losing_trades,
+                  ROUND(SUM(pnl_rs), 2) AS gross_pnl_rs,
+                  ROUND(SUM(pnl_rs), 2) AS net_pnl_rs,
+                  MAX(mode) AS mode
+           FROM trades
+           WHERE status = 'CLOSED' AND exit_time IS NOT NULL AND pnl_rs IS NOT NULL
+           GROUP BY date(exit_time)
+           ORDER BY date(exit_time) DESC LIMIT ?""",
         (days,),
     )
 
@@ -164,6 +164,7 @@ async def get_filtered_trades(
     strategy: str = None,
     status: str = None,
     limit: int = 1000,
+    index: str = None,
 ) -> list[dict]:
     """Filtered trade query — used by the Trades tab."""
     conditions = ["1=1"]
@@ -171,16 +172,21 @@ async def get_filtered_trades(
 
     if date_from:
         conditions.append("entry_time >= ?")
-        params.append(f"{date_from} 00:00:00")
+        params.append(f"{date_from}T00:00:00")
     if date_to:
         conditions.append("entry_time <= ?")
-        params.append(f"{date_to} 23:59:59")
+        params.append(f"{date_to}T23:59:59.999999")
     if strategy and strategy.upper() != "ALL":
         conditions.append("strategy_used = ?")
         params.append(strategy)
     if status and status.upper() != "ALL":
         conditions.append("status = ?")
         params.append(status.upper())
+
+    _pfx = {"NIFTY": "NSE:NIFTY", "BANKNIFTY": "NSE:BANKNIFTY", "SENSEX": "BSE:SENSEX"}
+    if index and index.upper() in _pfx:
+        conditions.append("symbol LIKE ?")
+        params.append(_pfx[index.upper()] + "%")
 
     where = " AND ".join(conditions)
     return await _query(
@@ -200,9 +206,10 @@ async def get_trade_summary(
     date_to: str = None,
     strategy: str = None,
     status: str = None,
+    index: str = None,
 ) -> dict:
     """Aggregate summary for the current filter set."""
-    trades = await get_filtered_trades(db_path, date_from, date_to, strategy, status, limit=10000)
+    trades = await get_filtered_trades(db_path, date_from, date_to, strategy, status, limit=10000, index=index)
     total  = len(trades)
     closed = [t for t in trades if t.get("status") == "CLOSED"]
     wins   = [t for t in closed if (t.get("pnl_rs") or 0) > 0]
