@@ -94,13 +94,19 @@ def monitor_exits(client_id, token):
     opens = store.open_trades()
     if not opens:
         return
-    symbols = [t["symbol"] for t in opens]
+    symbols = list(dict.fromkeys(t["symbol"] for t in opens))
     prices = {}
     try:
         url = "https://api-t1.fyers.in/data/quotes"
         headers = {"Authorization": f"{client_id}:{token}"}
-        resp = requests.get(url, headers=headers, params={"symbols": ",".join(symbols)}, timeout=10)
-        j = resp.json()
+        j = {}
+        for _att in range(5):
+            resp = requests.get(url, headers=headers, params={"symbols": ",".join(symbols)}, timeout=10)
+            j = resp.json()
+            if j.get("s") == "ok":
+                break
+            log(f"Quote not ok (try {_att+1}): {j.get('code')} {str(j.get('message'))[:60]}")
+            time.sleep(1.2)
         if j.get("s") == "ok":
             for d in j.get("d", []):
                 v = d.get("v", {})
@@ -137,13 +143,19 @@ def eod_squareoff(client_id, token):
     opens = store.open_trades()
     if not opens:
         return
-    symbols = [t["symbol"] for t in opens]
+    symbols = list(dict.fromkeys(t["symbol"] for t in opens))
     prices = {}
     try:
         url = "https://api-t1.fyers.in/data/quotes"
         headers = {"Authorization": f"{client_id}:{token}"}
-        resp = requests.get(url, headers=headers, params={"symbols": ",".join(symbols)}, timeout=10)
-        j = resp.json()
+        j = {}
+        for _att in range(5):
+            resp = requests.get(url, headers=headers, params={"symbols": ",".join(symbols)}, timeout=10)
+            j = resp.json()
+            if j.get("s") == "ok":
+                break
+            log(f"Quote not ok (try {_att+1}): {j.get('code')} {str(j.get('message'))[:60]}")
+            time.sleep(1.2)
         if j.get("s") == "ok":
             for d in j.get("d", []):
                 v = d.get("v", {})
@@ -171,13 +183,14 @@ def main():
             token = json.load(open(settings.FYERS_TOKEN_PATH))["token"]
             if in_market_hours():
                 fy = fyers()
+                monitor_exits(settings.FYERS_CLIENT_ID, token)
                 if store.today_pnl() <= -abs(settings.DAILY_LOSS_LIMIT):
                     log("Daily loss limit hit - skipping new entries")
                 else:
                     for inst in INSTRUMENTS:
                         for side in ("CE", "PE"):
                             try_entry(inst, side, fy, settings.FYERS_CLIENT_ID, token)
-                monitor_exits(settings.FYERS_CLIENT_ID, token)
+                            time.sleep(0.6)
             else:
                 eod_squareoff(settings.FYERS_CLIENT_ID, token)
         except Exception as e:
