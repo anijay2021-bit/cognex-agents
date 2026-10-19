@@ -103,8 +103,14 @@ def monitor_exits(client_id, token):
     symbols = [t["symbol"] for t in opens]
     url = "https://api-t1.fyers.in/data/quotes"
     headers = {"Authorization": f"{client_id}:{token}"}
-    resp = requests.get(url, headers=headers, params={"symbols": ",".join(symbols)}, timeout=10)
-    j = resp.json()
+    j = {}
+    for _att in range(5):
+        resp = requests.get(url, headers=headers, params={"symbols": ",".join(symbols)}, timeout=10)
+        j = resp.json()
+        if j.get("s") == "ok":
+            break
+        log(f"Quote not ok (try {_att+1}): {j.get(chr(99)+chr(111)+chr(100)+chr(101))}")
+        time.sleep(1.2)
     prices = {}
     if j.get("s") == "ok":
         for d in j.get("d", []):
@@ -137,8 +143,14 @@ def eod_squareoff(client_id, token):
     try:
         url = "https://api-t1.fyers.in/data/quotes"
         headers = {"Authorization": f"{client_id}:{token}"}
-        resp = requests.get(url, headers=headers, params={"symbols": ",".join(symbols)}, timeout=10)
-        j = resp.json()
+        j = {}
+        for _att in range(5):
+            resp = requests.get(url, headers=headers, params={"symbols": ",".join(symbols)}, timeout=10)
+            j = resp.json()
+            if j.get("s") == "ok":
+                break
+            log(f"Quote not ok (try {_att+1}): {j.get(chr(99)+chr(111)+chr(100)+chr(101))}")
+            time.sleep(1.2)
         if j.get("s") == "ok":
             for d in j.get("d", []):
                 v = d.get("v", {})
@@ -170,12 +182,13 @@ def main():
             token = json.load(open(settings.FYERS_TOKEN_PATH))["token"]
             if in_market_hours():
                 fy = fyers()
+                monitor_exits(settings.FYERS_CLIENT_ID, token)
                 if store.today_pnl() <= -abs(settings.DAILY_LOSS_LIMIT):
                     log("Daily loss limit hit - skipping new entries")
                 else:
                     for inst in INSTRUMENTS:
                         try_entry(inst, fy, token)
-                monitor_exits(settings.FYERS_CLIENT_ID, token)
+                        time.sleep(0.6)
             else:
                 eod_squareoff(settings.FYERS_CLIENT_ID, token)
         except Exception as e:
