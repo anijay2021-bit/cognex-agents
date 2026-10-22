@@ -20,7 +20,7 @@ INSTRUMENTS = [
 MAX_LOOKBACK_CANDLES = 20
 
 
-def fetch_candles(fy, symbol, lookback_days=5):
+def _fetch_candles_raw(fy, symbol, lookback_days=5):
     """Intraday candles at settings.TIMEFRAME resolution (same TF drives SMA and candles)."""
     now = dt.datetime.now(IST)
     start = now - dt.timedelta(days=lookback_days)
@@ -100,7 +100,7 @@ def check_option_confirmation(df_opt, cross_time, trig_time, side):
     return bool(cur["high"] > trig_high)
 
 
-def fetch_atm_option(client_id, token, index_symbol):
+def _fetch_atm_option_raw(client_id, token, index_symbol):
     """Fyers option-chain-v3 (strikecount=1 -> ATM only). Returns dict CE/PE rows + expiry."""
     url = "https://api-t1.fyers.in/data/options-chain-v3"
     headers = {"Authorization": f"{client_id}:{token}"}
@@ -122,3 +122,37 @@ def fetch_atm_option(client_id, token, index_symbol):
         return None
     out["expiry"] = expiry
     return out
+
+
+# ---- Fyers request budget: shared guard + TTL caches (Standard plan limits) ----
+import sys as _sys, os as _os, time as _time
+_sys.path.insert(0, _os.path.expanduser("~/cognex-shared"))
+import fyers_guard as _guard
+
+ALERT = None
+_CANDLES = {}
+_CHAIN = {}
+
+
+def fetch_candles(fy, symbol, *a, **k):
+    ttl = 55
+    c = _CANDLES.get(symbol)
+    if c and _time.time() - c[0] < ttl:
+        return None if c[1] is None else c[1].copy()
+    if not _guard.acquire("entry", ALERT):
+        return None
+    df = _fetch_candles_raw(fy, symbol, *a, **k)
+    _CANDLES[symbol] = (_time.time(), df)
+    return None if df is None else df.copy()
+
+
+def fetch_atm_option(client_id, token, index_symbol, force=False):
+    c = _CHAIN.get(index_symbol)
+    if c and not force and _time.time() - c[0] < 120:
+        return c[1]
+    if not _guard.acquire("entry", ALERT):
+        return c[1] if c else None
+    r = _fetch_atm_option_raw(client_id, token, index_symbol)
+    if r:
+        _CHAIN[index_symbol] = (_time.time(), r)
+    return r
