@@ -6,7 +6,71 @@ from fyers_apiv3 import fyersModel
 
 import store
 from config import settings
+import sys, os
 from strategy import INSTRUMENTS, fetch_candles, check_vwap_signal, fetch_atm_option
+sys.path.insert(0, os.path.expanduser("~/cognex-shared"))
+import fyers_guard as guard
+from fyers_ws import LivePrices
+import strategy as _strategy
+
+SCAN_SEC = getattr(settings, "ENTRY_SCAN_SEC", 60)
+MONITOR_SEC = getattr(settings, "MONITOR_EVERY_SEC", 3)
+_LIVE = None
+_LAST_REST = [0.0]
+_EOD_WARNED = set()
+
+
+def rest_quotes(client_id, token, symbols, kind):
+    out = {}
+    url = "https://api-t1.fyers.in/data/quotes"
+    headers = {"Authorization": f"{client_id}:{token}"}
+    for i in range(0, len(symbols), 50):
+        chunk = symbols[i:i + 50]
+        for att in range(3):
+            if not guard.acquire(kind, telegram):
+                return out
+            try:
+                r = requests.get(url, headers=headers, params={"symbols": ",".join(chunk)}, timeout=10)
+                j = r.json()
+            except Exception as e:
+                log(f"Quote error: {e}")
+                time.sleep(1)
+                continue
+            if j.get("s") == "ok":
+                for d in j.get("d", []):
+                    v = d.get("v", {})
+                    if "lp" in v:
+                        out[d["n"]] = v["lp"]
+                break
+            log(f"Quote not ok (try {att + 1}): {j.get('code')} {str(j.get('message'))[:60]}")
+            if "day" in str(j.get("message")):
+                return out
+            time.sleep(1.2)
+    return out
+
+
+def get_prices(client_id, token, symbols, kind):
+    """WebSocket prices first; budgeted REST only for symbols with no live price."""
+    global _LIVE
+    if _LIVE is None:
+        _LIVE = LivePrices(client_id, lambda: json.load(open(settings.FYERS_TOKEN_PATH))["token"], log)
+    prices, stale = {}, []
+    try:
+        _LIVE.sync(symbols)
+    except Exception as e:
+        log(f"WS sync error: {e}")
+    for s in symbols:
+        p = _LIVE.get(s)
+        if p is None:
+            stale.append(s)
+        else:
+            prices[s] = p
+    if stale and time.time() - _LAST_REST[0] >= 15:
+        _LAST_REST[0] = time.time()
+        prices.update(rest_quotes(client_id, token, stale, kind))
+    return prices
+
+
 
 IST = ZoneInfo(settings.IST)
 
@@ -61,6 +125,10 @@ def try_entry(inst, side, fy, client_id, token):
         return
     if store.signal_traded(leg, signal_id):
         return
+    chain = fetch_atm_option(client_id, token, inst["index"], force=True)
+    if not chain or chain[side]["symbol"] != symbol:
+        return
+    opt = chain[side]
     entry = float(opt.get("ltp") or trig["close"])
     if not entry:
         return
@@ -95,26 +163,7 @@ def monitor_exits(client_id, token):
     if not opens:
         return
     symbols = list(dict.fromkeys(t["symbol"] for t in opens))
-    prices = {}
-    try:
-        url = "https://api-t1.fyers.in/data/quotes"
-        headers = {"Authorization": f"{client_id}:{token}"}
-        j = {}
-        for _att in range(5):
-            resp = requests.get(url, headers=headers, params={"symbols": ",".join(symbols)}, timeout=10)
-            j = resp.json()
-            if j.get("s") == "ok":
-                break
-            log(f"Quote not ok (try {_att+1}): {j.get('code')} {str(j.get('message'))[:60]}")
-            time.sleep(1.2)
-        if j.get("s") == "ok":
-            for d in j.get("d", []):
-                v = d.get("v", {})
-                if "lp" in v:
-                    prices[d["n"]] = v["lp"]
-    except Exception as e:
-        log(f"Quote fetch error: {e}")
-        return
+    prices = get_prices(client_id, token, symbols, "exit")
     for t in opens:
         ltp = prices.get(t["symbol"])
         if ltp is None:
@@ -144,29 +193,15 @@ def eod_squareoff(client_id, token):
     if not opens:
         return
     symbols = list(dict.fromkeys(t["symbol"] for t in opens))
-    prices = {}
-    try:
-        url = "https://api-t1.fyers.in/data/quotes"
-        headers = {"Authorization": f"{client_id}:{token}"}
-        j = {}
-        for _att in range(5):
-            resp = requests.get(url, headers=headers, params={"symbols": ",".join(symbols)}, timeout=10)
-            j = resp.json()
-            if j.get("s") == "ok":
-                break
-            log(f"Quote not ok (try {_att+1}): {j.get('code')} {str(j.get('message'))[:60]}")
-            time.sleep(1.2)
-        if j.get("s") == "ok":
-            for d in j.get("d", []):
-                v = d.get("v", {})
-                if "lp" in v:
-                    prices[d["n"]] = v["lp"]
-    except Exception:
-        pass
+    prices = get_prices(client_id, token, symbols, "exit")
     for t in opens:
         ltp = prices.get(t["symbol"])
         if ltp is None:
-            ltp = t["entry_price"]
+            if t["symbol"] not in _EOD_WARNED:
+                _EOD_WARNED.add(t["symbol"])
+                log(f"EOD: no price for {t['symbol']}, leaving OPEN until a quote is available")
+                telegram(f"VWAP EOD: no price for {t['symbol']} - left OPEN, will retry")
+            continue
         pnl = store.close_trade(t["id"], ltp, dt.datetime.now(IST).isoformat(), "EOD SQUAREOFF")
         log(f"EXIT EOD {t['symbol']} @ {ltp} pnl {pnl}")
         telegram(f"VWAP EXIT (EOD Squareoff): {t['symbol']} @ {ltp} pnl Rs.{pnl}")
@@ -174,29 +209,31 @@ def eod_squareoff(client_id, token):
 
 def main():
     store.init()
+    _strategy.ALERT = telegram
     log(f"VWAP Agent started (mode={settings.MODE}) timeframe={settings.TIMEFRAME}min")
     telegram(f"VWAP Agent Started\nMode: {settings.MODE}\n"
              f"Instruments: NIFTY, BANKNIFTY, SENSEX (ATM CE+PE)\n"
              f"Timeframe: {settings.TIMEFRAME}min | 3-tier sub-positions")
+    last_scan = 0.0
     while True:
         try:
             token = json.load(open(settings.FYERS_TOKEN_PATH))["token"]
             if in_market_hours():
-                fy = fyers()
                 monitor_exits(settings.FYERS_CLIENT_ID, token)
-                if store.today_pnl() <= -abs(settings.DAILY_LOSS_LIMIT):
-                    log("Daily loss limit hit - skipping new entries")
-                else:
-                    for inst in INSTRUMENTS:
-                        for side in ("CE", "PE"):
-                            try_entry(inst, side, fy, settings.FYERS_CLIENT_ID, token)
-                            time.sleep(0.6)
+                if time.time() - last_scan >= SCAN_SEC:
+                    last_scan = time.time()
+                    fy = fyers()
+                    if store.today_pnl() <= -abs(settings.DAILY_LOSS_LIMIT):
+                        log("Daily loss limit hit - skipping new entries")
+                    else:
+                        for inst in INSTRUMENTS:
+                            for side in ("CE", "PE"):
+                                try_entry(inst, side, fy, settings.FYERS_CLIENT_ID, token)
             else:
                 eod_squareoff(settings.FYERS_CLIENT_ID, token)
         except Exception as e:
             log(f"Loop error: {e}")
-        time.sleep(settings.SCAN_EVERY_SEC)
-
+        time.sleep(MONITOR_SEC)
 
 if __name__ == "__main__":
     main()
