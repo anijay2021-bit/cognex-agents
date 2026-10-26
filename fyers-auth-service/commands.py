@@ -1,7 +1,7 @@
 import sqlite3, subprocess, os, html, datetime
 H = os.path.expanduser("~")
 AG = {"vwap": ("vwap-agent", "vwap-agent.service"), "18sma": ("18sma-agent", "18sma-agent.service")}
-HELP = ("<b>COGNEX commands</b>\n/status - agents, open trades, today P&amp;L\n/positions - open trades\n/pnl - today P&amp;L by agent\n/trades - today's trades\n/stop vwap|18sma|all\n/start vwap|18sma|all\n/help - this list\n\nFYERS_AUTH &lt;url&gt; - refresh Fyers token")
+HELP = ("<b>COGNEX commands</b>\n/status - agents, open trades, today P&amp;L\n/positions - open trades\n/pnl - today P&amp;L by agent\n/trades - today's trades\n/monthpnlnf, /monthpnlbnf, /monthpnlsx - month-to-date P&amp;L per index\n/stop vwap|18sma|all\n/start vwap|18sma|all\n/help - this list\n\nFYERS_AUTH &lt;url&gt; - refresh Fyers token")
 def _rows(d, q):
     try:
         c = sqlite3.connect(f"{H}/{d}/cognex_agent.db", timeout=5)
@@ -63,6 +63,21 @@ def ctl(action, arg):
         if action == "stop" and _open(d):
             out.append(f"WARNING {n} has open trades that are now unmanaged. /start {n} to resume.")
     return "\n".join(out)
+IDX = {"nf": ("NIFTY", "Nifty"), "bnf": ("BANKNIFTY", "BankNifty"), "sx": ("SENSEX", "Sensex")}
+def monthpnl(k):
+    pre, name = IDX[k]
+    m = _today()[:7]
+    out = [f"<b>{name} P&amp;L {m}-01 to {_today()}</b>"]
+    tot = 0.0
+    cnt = 0
+    for a, (d, s) in AG.items():
+        r = _rows(d, f"SELECT COUNT(*) n, COALESCE(SUM(pnl_rs),0) p FROM trades WHERE status='CLOSED' AND upper(underlying) LIKE '{pre}%' AND substr(exit_time,1,7)='{m}'")
+        n, pp = (r[0]["n"], float(r[0]["p"])) if r else (0, 0.0)
+        tot += pp
+        cnt += n
+        out.append(f"{a}: {pp:+.0f} ({n} trades)")
+    out.append(f"Total: {tot:+.0f} ({cnt} trades)")
+    return "\n".join(out)
 def handle(text):
     p = text.strip().split()
     cmd = p[0].lower().split("@")[0]
@@ -73,6 +88,8 @@ def handle(text):
         return status()
     if cmd == "/positions":
         return positions()
+    if cmd in ("/monthpnlnf", "/monthpnlbnf", "/monthpnlsx"):
+        return monthpnl(cmd[9:])
     if cmd == "/pnl":
         return pnl()
     if cmd == "/trades":
