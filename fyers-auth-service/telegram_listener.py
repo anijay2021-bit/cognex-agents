@@ -46,6 +46,17 @@ class TelegramAuthListener:
     def handle_message(self, raw_text, chat_id):
         text = raw_text.strip()
         upper = text.upper()
+        if text.startswith('/') and not upper.startswith('/HELP'):
+            if str(chat_id) != str(settings.telegram_chat_id):
+                return
+            try:
+                from commands import handle as _h
+                r = _h(text)
+            except Exception as e:
+                r = 'Command error: ' + str(e)[:150]
+            if r:
+                self._send(chat_id, r)
+                return
         if upper.startswith("FYERS_AUTH"):
             url = text[10:].strip().strip("[] ")
             self._cmd_fyers_auth(chat_id, url)
