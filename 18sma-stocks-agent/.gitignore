@@ -7,3 +7,4 @@ settings.json
 instruments.json
 __pycache__/
 *.bak*
+config/settings.py

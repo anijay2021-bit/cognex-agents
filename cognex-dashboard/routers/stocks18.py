@@ -40,62 +40,6 @@ def _hhmm(v, name):
         raise HTTPException(400, f"{name} must be HH:MM")
 
 
-@router.get("/settings")
-def get_settings():
-    return _read_settings()
-
-
-@router.post("/settings")
-def save_settings(body: dict):
-    s = _read_settings()
-    try:
-        if "lots" in body:
-            s["lots"] = int(body["lots"])
-            if s["lots"] < 1:
-                raise ValueError("lots must be >= 1")
-        if "product" in body:
-            p = str(body["product"]).upper()
-            if p not in ("INTRADAY", "CARRYFORWARD"):
-                raise ValueError("product must be INTRADAY or CARRYFORWARD")
-            s["product"] = p
-        for k in ("tgt_mode", "sl_mode"):
-            if k in body:
-                m = str(body[k]).lower()
-                if m not in ("percent", "absolute"):
-                    raise ValueError(f"{k} must be percent or absolute")
-                s[k] = m
-        for k in ("tgt_value", "sl_value", "min_price"):
-            if k in body:
-                s[k] = float(body[k])
-                if s[k] <= 0:
-                    raise ValueError(f"{k} must be > 0")
-        if s["sl_mode"] == "percent" and s["sl_value"] >= 100:
-            raise ValueError("SL percent must be below 100")
-        if "sma_period" in body:
-            s["sma_period"] = int(body["sma_period"])
-            if not 2 <= s["sma_period"] <= 200:
-                raise ValueError("sma_period must be 2-200")
-        if "signal_mode" in body:
-            m = str(body["signal_mode"]).lower()
-            if m not in ("cross", "always"):
-                raise ValueError("signal_mode must be cross or always")
-            s["signal_mode"] = m
-        if "scan_enabled" in body:
-            s["scan_enabled"] = bool(body["scan_enabled"])
-        for k in ("scan_until", "squareoff_time"):
-            if k in body:
-                s[k] = _hhmm(body[k], k)
-    except HTTPException:
-        raise
-    except (ValueError, TypeError) as e:
-        raise HTTPException(400, str(e))
-    tmp = SET_FILE + ".tmp"
-    with open(tmp, "w") as f:
-        json.dump(s, f, indent=2)
-    os.replace(tmp, SET_FILE)
-    return s
-
-
 def _rows(q, args=()):
     if not os.path.exists(DB_FILE):
         return []
