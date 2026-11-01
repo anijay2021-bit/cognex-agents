@@ -49,6 +49,16 @@ AGENTS = {
         "broker_data": "Fyers",
         "broker_exec": "Paper",
     },
+    "stocks18": {
+        "display_name": "18SMA-Stocks",
+        "account":      "Kiran - alerts only",
+        "service":      "18sma-stocks-agent",
+        "db":           None,
+        "log":          f"{BASE}/18sma-stocks-agent/logs/stocks18.log",
+        "strategies":   ["18 SMA close (15m) on F&O stocks -> ATM option alert"],
+        "broker_data":  "Angel One",
+        "broker_exec":  "Alerts",
+    },
     "pocketpivot": {
         "display_name": "Pocket Pivot",
         "account":      "Kiran - alerts only",
