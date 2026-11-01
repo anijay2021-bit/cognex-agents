@@ -145,7 +145,7 @@ class Angel:
 
     def __init__(self, env):
         self.env, self.jwt = env, None
-        self.last_call, self.fail_until, self.warned = 0.0, 0.0, False
+        self.last_call, self.fail_until, self.warned, self.key_warned = 0.0, 0.0, False, False
 
     def _hdr(self, auth=True):
         h = {"Content-Type": "application/json", "Accept": "application/json", "X-UserType": "USER",
@@ -193,9 +193,17 @@ class Angel:
                 except Exception:
                     time.sleep(2 + attempt * 2)          # rate-limit pages are not JSON
                     continue
-                if r.get("status"):
+                if r.get("status") is True or r.get("success") is True:
                     return r.get("data")
-                msg, code = str(r.get("message", "")), str(r.get("errorcode", ""))
+                msg, code = str(r.get("message", "")), str(r.get("errorcode") or r.get("errorCode") or "")
+                if code == "AG8004":
+                    log.error("Angel One rejected the API key for data calls (AG8004)")
+                    if not self.key_warned:
+                        self.key_warned = True
+                        tg("18SMA-Stocks: Angel One rejects this API key for market-data calls (AG8004 Invalid API Key). "
+                           "Login works but candles/quotes do not. Create a SmartAPI app/key with Historical + Market data "
+                           "access (check static IP too) and put it in 18sma-stocks-agent/config/.env as ANGELONE_API_KEY.")
+                    return None
                 if "token" in msg.lower() or code in ("AG8001", "AG8002", "AB8050", "AB8051"):
                     self.jwt = None
                     continue
