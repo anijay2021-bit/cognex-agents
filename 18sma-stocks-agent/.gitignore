@@ -1,0 +1,9 @@
+config/.env
+venv/
+logs/
+signals.db
+status.json
+settings.json
+instruments.json
+__pycache__/
+*.bak*

@@ -1,0 +1,14 @@
+[Unit]
+Description=COGNEX 18SMA-Stocks agent (F&O stocks 15m 18 SMA alerts, Angel One)
+After=network.target
+OnFailure=cognex-notify-fail@%n.service
+
+[Service]
+User=anijay2021
+WorkingDirectory=/home/anijay2021/18sma-stocks-agent
+ExecStart=/home/anijay2021/18sma-stocks-agent/venv/bin/python main.py
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
