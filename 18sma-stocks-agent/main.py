@@ -16,7 +16,7 @@ DB_FILE = os.path.join(BASE, "signals.db")
 STATUS_FILE = os.path.join(BASE, "status.json")
 CSV_FILE = os.path.join(BASE, "fno_lot_sizes.csv")
 INST_FILE = os.path.join(BASE, "instruments.json")
-MASTER_URL = "https://margincalculator.angelbroking.com/OpenAPI_Files/files/OpenAPIScripMaster.json"
+MASTER_URL = "https://margincalculator.angelbroking.com/OpenAPI_File/files/OpenAPIScripMaster.json"
 TF = dt.timedelta(minutes=15)
 
 DEFAULTS = {
@@ -255,7 +255,22 @@ def load_instruments(force=False):
         if dt.date.fromtimestamp(os.path.getmtime(INST_FILE)) == today:
             return json.load(open(INST_FILE))
     log.info("Downloading Angel One instrument master ...")
-    inst = build_instruments(requests.get(MASTER_URL, timeout=180).json())
+    raw = None
+    for attempt in range(4):
+        try:
+            r = requests.get(MASTER_URL, timeout=240)
+            r.raise_for_status()
+            raw = r.json()
+            break
+        except Exception as e:
+            log.warning("instrument master download failed (%s), retry %d", e, attempt + 1)
+            time.sleep(10 * (attempt + 1))
+    if raw is None:
+        if os.path.exists(INST_FILE):
+            log.warning("using stale instrument cache")
+            return json.load(open(INST_FILE))
+        raise RuntimeError("cannot download instrument master")
+    inst = build_instruments(raw)
     json.dump(inst, open(INST_FILE, "w"))
     log.info("Instruments: %d equities, %d option underlyings", len(inst["eq"]), len(inst["opt"]))
     return inst
