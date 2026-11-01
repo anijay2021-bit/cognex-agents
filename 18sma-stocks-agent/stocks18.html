@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>18SMA-Stocks - COGNEX</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Segoe UI,Arial,sans-serif;background:#f1f5f9;color:#0f172a}
+header{background:#fff;border-bottom:1px solid #e2e8f0;padding:14px 22px;display:flex;justify-content:space-between;align-items:center}
+h1{font-size:18px;margin:0}a{color:#2563eb;text-decoration:none}
+main{max-width:1250px;margin:18px auto;padding:0 16px;display:grid;gap:16px}
+.card{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:16px}
+.card h2{font-size:14px;margin:0 0 12px;color:#334155}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}
+label{display:block;font-size:11px;color:#64748b;margin-bottom:3px;text-transform:uppercase;letter-spacing:.4px}
+input,select{width:100%;padding:7px 9px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px}
+.row{display:flex;gap:6px}.row select{width:46%}.row input{width:54%}
+button{background:#2563eb;color:#fff;border:0;border-radius:6px;padding:9px 18px;font-size:13px;cursor:pointer}
+button:hover{background:#1d4ed8}#msg{margin-left:12px;font-size:12px}
+.kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.k{background:#f8fafc;border-radius:8px;padding:10px}.k b{display:block;font-size:18px;margin-top:3px}
+table{width:100%;border-collapse:collapse;font-size:12px}th{text-align:left;color:#64748b;font-weight:600;padding:7px 6px;border-bottom:1px solid #e2e8f0;white-space:nowrap}
+td{padding:7px 6px;border-bottom:1px solid #f1f5f9;white-space:nowrap}.pos{color:#16a34a}.neg{color:#dc2626}
+.tag{padding:2px 7px;border-radius:10px;font-size:11px}.CALL{background:#dcfce7;color:#166534}.PUT{background:#fee2e2;color:#991b1b}
+.OPEN{background:#dbeafe;color:#1e40af}.CLOSED{background:#e2e8f0;color:#334155}.ALERT{background:#fef9c3;color:#854d0e}
+.wrap{overflow-x:auto}.chk{display:flex;align-items:center;gap:8px;padding-top:20px}.chk input{width:auto}
+</style></head><body>
+<header><h1>18SMA-Stocks &mdash; F&amp;O stocks, 15-min close vs 18 SMA (Angel One)</h1><a href="/">&larr; Dashboard</a></header>
+<main>
+<div class="card"><h2>Today</h2><div class="kpi">
+<div class="k">Signals today<b id="k_n">-</b></div><div class="k">Open<b id="k_op">-</b></div>
+<div class="k">P&amp;L today (closed)<b id="k_pt">-</b></div><div class="k">P&amp;L month (closed)<b id="k_pm">-</b></div>
+<div class="k">Last scan<b id="k_ls" style="font-size:14px">-</b></div><div class="k">Stocks scanned / eligible<b id="k_sc" style="font-size:14px">-</b></div>
+</div></div>
+<div class="card" style="font-size:12px;color:#64748b">Settings (lots, Intraday/Carry forward, target, stop loss, etc.) are in the main dashboard &rarr; <b>Settings</b> tab &rarr; <b>18SMA-Stocks</b>.</div>
+<div class="card"><h2>Signals</h2><div class="wrap"><table><thead><tr>
+<th>Time</th><th>Stock</th><th>Signal</th><th>Close</th><th>SMA</th><th>Option</th><th>Lots</th><th>Entry</th><th>TGT</th><th>SL</th><th>Status</th><th>Exit</th><th>P&amp;L</th><th>Reason</th>
+</tr></thead><tbody id="rows"></tbody></table></div></div>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+const rs=v=>v==null?'-':Number(v).toFixed(2);
+const pn=v=>v==null?'-':'<span class="'+(v>=0?'pos':'neg')+'">'+(v>=0?'+':'')+Math.round(v).toLocaleString('en-IN')+'</span>';
+async function refresh(){
+ try{const s=await (await fetch('/api/stocks18/summary')).json(),st=s.status||{};
+  $('k_n').textContent=s.signals_today;$('k_op').textContent=s.open;$('k_pt').innerHTML=pn(s.pnl_today);$('k_pm').innerHTML=pn(s.pnl_month);
+  $('k_ls').textContent=st.last_scan?st.last_scan.replace('T',' ')+' ('+(st.signals_last||0)+' signals)':'-';
+  $('k_sc').textContent=(st.scanned!=null?st.scanned:'-')+' / '+(st.eligible!=null?st.eligible:'-');}catch(e){}
+ try{const d=await (await fetch('/api/stocks18/signals?limit=300')).json();
+  $('rows').innerHTML=d.map(r=>{const e=new Date(r.expiry).toLocaleDateString('en-GB',{day:'2-digit',month:'short'}).toUpperCase();
+   return '<tr><td>'+(r.signal_time||'').slice(5,16).replace('T',' ')+'</td><td><b>'+r.symbol+'</b></td><td><span class="tag '+r.direction+'">'+r.direction+'</span></td><td>'+rs(r.spot)+'</td><td>'+rs(r.sma)+'</td><td>'+e+' '+r.strike+' '+r.opt_type+'</td><td>'+r.lots+'x'+r.lot_size+'</td><td>'+rs(r.entry_price)+'</td><td>'+rs(r.target_price)+'</td><td>'+rs(r.sl_price)+'</td><td><span class="tag '+r.status+'">'+r.status+'</span></td><td>'+rs(r.exit_price)+'</td><td>'+pn(r.pnl_rs)+'</td><td>'+(r.reason||'')+'</td></tr>';}).join('')||'<tr><td colspan="14" style="color:#64748b;padding:14px">No signals yet.</td></tr>';}catch(e){}}
+refresh();setInterval(refresh,15000);
+</script></body></html>

@@ -6,7 +6,7 @@ closes above / below its 18 SMA it sends a Telegram alert for the ATM CALL / PUT
 option price, target and stop-loss, then tracks that signal (paper) until TGT / SL /
 square-off. Settings live in settings.json and are edited from the COGNEX dashboard.
 """
-import os, sys, csv, json, time, hmac, base64, struct, hashlib, sqlite3, logging, datetime as dt
+import os, re, sys, csv, json, time, hmac, base64, struct, hashlib, sqlite3, logging, datetime as dt
 import requests
 
 BASE = os.path.dirname(os.path.abspath(__file__))
@@ -70,12 +70,43 @@ def hhmm(s, default):
         return default
 
 
-def get_settings():
-    s = dict(DEFAULTS)
+PY_FILE = os.path.join(BASE, "config", "settings.py")   # edited from dashboard Settings tab
+_PYKEYS = {"SCAN_ENABLED": "scan_enabled", "LOTS": "lots", "PRODUCT": "product", "TGT_MODE": "tgt_mode",
+           "TGT_VALUE": "tgt_value", "SL_MODE": "sl_mode", "SL_VALUE": "sl_value", "MIN_PRICE": "min_price",
+           "SMA_PERIOD": "sma_period", "SIGNAL_MODE": "signal_mode", "SCAN_UNTIL": "scan_until",
+           "SQUAREOFF_TIME": "squareoff_time"}
+
+
+def read_py_settings():
+    out = {}
     try:
-        s.update(json.load(open(SET_FILE)))
+        for ln in open(PY_FILE, encoding="utf-8"):
+            m = re.match(r'^\s*([A-Z_]+)\s*=\s*"?([^"#\n]*?)"?\s*(#.*)?$', ln)
+            if m and m.group(1) in _PYKEYS:
+                v = m.group(2).strip()
+                k = _PYKEYS[m.group(1)]
+                if k == "scan_enabled":
+                    v = v.lower() in ("on", "true", "1", "yes")
+                out[k] = v
     except Exception:
         pass
+    return out
+
+
+def write_py_settings(s):
+    lines = ["# 18SMA-Stocks settings - edit from the COGNEX dashboard > Settings > 18SMA-Stocks\n"]
+    for K, k in _PYKEYS.items():
+        v = s[k]
+        if k == "scan_enabled":
+            v = "on" if v else "off"
+        lines.append(f'{K} = "{v}"\n' if isinstance(v, str) else f"{K} = {v}\n")
+    with open(PY_FILE, "w", encoding="utf-8") as f:
+        f.writelines(lines)
+
+
+def get_settings():
+    s = dict(DEFAULTS)
+    s.update(read_py_settings())
     try:
         s["lots"] = max(1, int(s["lots"]))
         s["sma_period"] = max(2, int(s["sma_period"]))
@@ -510,8 +541,14 @@ def last_boundary(now):
 
 def main():
     init_db()
-    if not os.path.exists(SET_FILE):
-        json.dump(DEFAULTS, open(SET_FILE, "w"), indent=2)
+    if not os.path.exists(PY_FILE):
+        base = dict(DEFAULTS)
+        try:
+            base.update(json.load(open(SET_FILE)))     # migrate old settings.json
+        except Exception:
+            pass
+        os.makedirs(os.path.dirname(PY_FILE), exist_ok=True)
+        write_py_settings(base)
     need = ("ANGELONE_API_KEY", "ANGELONE_CLIENT_ID", "ANGELONE_PASSWORD", "ANGELONE_TOTP_SECRET")
     miss = [k for k in need if not ENV.get(k)]
     if miss:
