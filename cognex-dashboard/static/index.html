@@ -233,7 +233,7 @@ select.si{text-align:left;width:160px;cursor:pointer}
     </div>
     <div class="ac" id="card-stocks18">
       <div class="atp"><div><div class="an">18SMA-Stocks</div><div class="as2">F&amp;O stocks - 15m 18 SMA alerts (Angel One)</div></div><div class="sp unknown" id="pill-stocks18"><div class="spd"></div><span>-</span></div></div>
-      <div class="asts"><div class="ast"><div class="al">Scans</div><div class="av" style="font-size:11px;color:#64748b">every 15 min</div></div><div class="ast"><div class="al">Settings</div><div class="av" style="font-size:11px"><a href="/stocks18.html" target="_blank">Open settings &amp; signals</a></div></div></div>
+      <div class="asts"><div class="ast"><div class="al">Scans</div><div class="av" style="font-size:11px;color:#64748b">every 15 min</div></div><div class="ast"><div class="al">Signals</div><div class="av" style="font-size:11px"><a href="/stocks18.html" target="_blank">View signals</a> &middot; settings in Settings tab</div></div></div>
       <div class="abt"><div class="ab start" onclick="act('stocks18','start')">Start</div><div class="ab stop" onclick="act('stocks18','stop')">Stop</div><div class="ab restart" onclick="act('stocks18','restart')">Restart</div></div>
     </div>
     <div class="ac" id="card-pocketpivot">
@@ -310,7 +310,7 @@ select.si{text-align:left;width:160px;cursor:pointer}
         <button onclick="clearFilters()" style="height:32px;padding:0 12px;border-radius:7px;border:1px solid #e2e8f0;background:#f8fafc;color:#64748b;font-size:13px;cursor:pointer">Clear</button>
       </div>
       <div style="margin-left:auto;display:flex;gap:6px">
-        <div class="tt active" id="ttpn" onclick="setTT('nitin',this)">Nitin</div><div class="tt" id="ttp18" onclick="setTT('sma18',this)">18SMA</div><div class="tt" id="ttpv" onclick="setTT('vwap',this)">VWAP</div>
+        <div class="tt active" id="ttpn" onclick="setTT('nitin',this)">Nitin</div><div class="tt" id="ttp18" onclick="setTT('sma18',this)">18SMA</div><div class="tt" id="ttpv" onclick="setTT('vwap',this)">VWAP</div><div class="tt" id="ttps" onclick="setTT('stocks18',this)">18SMA-Stocks</div>
       </div>
     </div>
   </div>
@@ -575,12 +575,13 @@ const GROUPS=[
   {id:'prajnan_cal',label:'Prajñān — Calendar Spread'},
   {id:'nitin',label:'Nitin - Swing Setups'},
   {id:'pocketpivot',label:'Pocket Pivot - Screener'},
-  {id:'sma18',label:'18SMA — Breakout Strategy'},{id:'vwap',label:'VWAP — Mean Reversion'},
+  {id:'sma18',label:'18SMA — Breakout Strategy'},{id:'stocks18',label:'18SMA-Stocks'},{id:'vwap',label:'VWAP — Mean Reversion'},
 ];
 const GMAP={
   prajnan_cal:['c_lots','c_sl_candle','c_flip_sl','c_max_flips','c_roll_exit','c_roll_entry','c_monthly_exit','c_skip_resell','c_hedge','c_hedge_ce','c_hedge_pe','c_daily_loss'],
   nitin:['n_mode','n_capital','n_risk_pct','n_max_alloc','n_max_stop','n_max_positions','n_min_turnover','n_scan_time','n_monitor_min','n_signal_valid'],
   pocketpivot:['pp_scan_from','pp_no_scan_after','pp_interval'],
+  stocks18:['s18s_scan_enabled','s18s_product','s18s_lots','s18s_min_price','s18s_signal_mode','s18s_tgt_mode','s18s_tgt_value','s18s_sl_mode','s18s_sl_value','s18s_scan_until','s18s_squareoff'],
   sma18:['s18_timeframe','s18_sl_mode','s18_sl_value','s18_target_mode','s18_target_value','s18_daily_loss','s18_nifty_lots','s18_nifty_lot_size','s18_banknifty_lots','s18_banknifty_lot_size','s18_sensex_lots','s18_sensex_lot_size'],vwap:['vwap_timeframe','vwap_sl_buffer','vwap_daily_loss','vwap_nifty_lots','vwap_nifty_lot_size','vwap_banknifty_lots','vwap_banknifty_lot_size','vwap_sensex_lots','vwap_sensex_lot_size'],
 };
 
