@@ -20,6 +20,7 @@ frm = (end - dt.timedelta(days=5)).replace(hour=9, minute=15, second=0, microsec
 
 up, dn, last_above, last_below, nodata = collections.defaultdict(list), collections.defaultdict(list), [], [], []
 low = 0
+rows_up = []
 for sym, tok in toks:
     rows = A.candles(tok, frm, end)
     cl = []
@@ -45,11 +46,21 @@ for sym, tok in toks:
         close_time = (t + M.TF).strftime("%H:%M")
         if c0 <= s0 and c1 > s1:
             up[close_time].append(sym)
+            rows_up.append((sym, close_time, c1, tok))
         elif c0 >= s0 and c1 < s1:
             dn[close_time].append(sym)
     s_last = sum(closes[-P:]) / P
     (last_above if closes[-1] > s_last else last_below).append(sym)
 
+import csv
+toklist = sorted({t for _, _, _, t in rows_up})
+q = A.ltp([("NSE", t) for t in toklist]) if toklist else {}
+with open("scan_today.csv", "w", newline="") as f:
+    w = csv.writer(f)
+    w.writerow(["script", "time closes", "closed price", "cmp"])
+    for sym, ct, c1, tok in sorted(rows_up, key=lambda x: (x[1], x[0])):
+        w.writerow([sym, ct, round(c1, 2), q.get(("NSE", str(tok)))])
+print("CSV rows", len(rows_up))
 print("DATE", today, "| stocks", len(toks), "| no data", len(nodata), "| below Rs100", low)
 print("CROSSED ABOVE 18SMA (candle close time):")
 for k in sorted(up):
