@@ -18,6 +18,8 @@ CSV_FILE = os.path.join(BASE, "fno_lot_sizes.csv")
 INST_FILE = os.path.join(BASE, "instruments.json")
 MASTER_URL = "https://margincalculator.angelbroking.com/OpenAPI_File/files/OpenAPIScripMaster.json"
 TF = dt.timedelta(minutes=15)
+MAX_SPREAD_PCT = 5.0     # skip option if (ask - bid) is wider than this % of ask ...
+MAX_SPREAD_ABS = 0.10    # ... unless the spread is only this many Rs (2 ticks) or less
 
 DEFAULTS = {
     "scan_enabled": True,
@@ -270,6 +272,45 @@ class Angel:
                     pass
         return out
 
+    def quotes(self, items):
+        """FULL-mode quotes -> {(exchange, token): {ltp, close(prev), vol(traded today), bid, ask}}."""
+        out = {}
+        for i in range(0, len(items), 50):
+            grp = {}
+            for e, t in items[i:i + 50]:
+                grp.setdefault(e, []).append(str(t))
+            d = self.post("/rest/secure/angelbroking/market/v1/quote/",
+                          {"mode": "FULL", "exchangeTokens": grp}, gap=1.1)
+            for q in (d or {}).get("fetched", []) or []:
+                try:
+                    dep = q.get("depth") or {}
+
+                    def best(side):
+                        for lv in dep.get(side) or []:
+                            if float(lv.get("price") or 0) > 0 and float(lv.get("quantity") or 0) > 0:
+                                return float(lv["price"])
+                        return 0.0
+
+                    out[(q["exchange"], str(q["symbolToken"]))] = {
+                        "ltp": float(q["ltp"]), "close": float(q.get("close") or 0),
+                        "vol": float(q.get("tradeVolume") or 0), "bid": best("buy"), "ask": best("sell")}
+                except Exception:
+                    pass
+        return out
+
+
+def entry_check(q):
+    """Real buy price for an option, or (None, reason) when the contract is not tradable right now."""
+    bid, ask, ltp = q["bid"], q["ask"], q["ltp"]
+    if q["vol"] <= 0:
+        return None, "not traded today (last price %.2f is yesterday's close)" % ltp
+    if ask <= 0 or bid <= 0:
+        return None, "no two-sided market (bid %.2f / ask %.2f)" % (bid, ask)
+    sp = ask - bid
+    if sp > MAX_SPREAD_ABS and sp / ask * 100 > MAX_SPREAD_PCT:
+        return None, "wide spread (bid %.2f / ask %.2f)" % (bid, ask)
+    return ask, ""
+
 
 # ----------------------------------------------------------------------------- instruments
 def build_instruments(raw):
@@ -407,7 +448,7 @@ def fmt_signal(sig, opt, entry, tgt, sl, S):
         "BUY ATM %s: %s %s %g %s" % ("CALL" if above else "PUT", sig["sym"], exp, opt["strike"], opt["type"]),
     ]
     if entry:
-        lines.append("Option price: Rs %.2f" % entry)
+        lines.append("Entry (ask): Rs %.2f" % entry)
         lines.append("TGT: Rs %.2f (%s) | SL: Rs %.2f (%s)" % (
             tgt, ("+%g%%" % S["tgt_value"]) if S["tgt_mode"] == "percent" else ("+Rs %g" % S["tgt_value"]),
             sl, ("-%g%%" % S["sl_value"]) if S["sl_mode"] == "percent" else ("-Rs %g" % S["sl_value"])))
@@ -469,10 +510,18 @@ def process_signals(A, found, S):
             log.warning("No option contract for %s", sg["sym"])
             continue
         picks.append((sg, opt))
-    q = A.ltp([("NFO", o["token"]) for _, o in picks])
-    msgs = []
+    q = A.quotes([("NFO", o["token"]) for _, o in picks])
+    msgs, skipped = [], []
     for sg, opt in picks:
-        entry = q.get(("NFO", str(opt["token"])))
+        qq = q.get(("NFO", str(opt["token"])))
+        entry = None                    # no quote at all -> alert only, not tracked (as before)
+        if qq is not None:
+            entry, why = entry_check(qq)
+            if entry is None:
+                nm = "%s %g %s: %s" % (sg["sym"], opt["strike"], opt["type"], why)
+                skipped.append(nm)
+                log.info("Skipped (illiquid) %s", nm)
+                continue
         tgt, sl = levels(entry, S) if entry else (None, None)
         lot = opt["lot"]
         with db() as c:
@@ -486,6 +535,9 @@ def process_signals(A, found, S):
             fresh = cur.rowcount == 1
         if fresh:
             msgs.append(fmt_signal(sg, opt, entry, tgt, sl, S))
+    if skipped:
+        msgs.append("18SMA-Stocks: %d signal(s) skipped - option not tradable (no real price):\n%s"
+                    % (len(skipped), "\n".join(skipped)))
     return msgs
 
 
@@ -495,10 +547,13 @@ def monitor(A, S, now):
         opens = [dict(r) for r in c.execute("SELECT * FROM signals WHERE status='OPEN'")]
     if not opens:
         return
-    q = A.ltp([("NFO", o["option_token"]) for o in opens])
+    q = A.quotes([("NFO", o["option_token"]) for o in opens])
     sq = hhmm(S["squareoff_time"], dt.time(15, 15))
     for o in opens:
-        p = q.get(("NFO", str(o["option_token"])))
+        qq = q.get(("NFO", str(o["option_token"])))
+        p = None                        # sell side: best bid, else last price only if it traded today
+        if qq:
+            p = qq["bid"] if qq["bid"] > 0 else (qq["ltp"] if qq["vol"] > 0 else None)
         reason = None
         sig_day = o["signal_time"][:10]
         expiry_day = o["expiry"] <= now.date().isoformat()
