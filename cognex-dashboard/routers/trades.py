@@ -55,6 +55,7 @@ def _stocks18_trades(date_from, date_to, status, strategy, index):
             "direction": "BUY", "strategy_used": "18SMA-Stocks",
             "entry_price": r.get("entry_price") or 0, "exit_price": r.get("exit_price"),
             "quantity": (r.get("lots") or 0) * (r.get("lot_size") or 0), "pnl_rs": pnl,
+            "target_price": r.get("target_price"),
             "status": st, "mode": "PAPER", "entry_time": r.get("signal_time"),
             "exit_time": r.get("exit_time") or r.get("closed_at") or r.get("exit_ts"),
         })
