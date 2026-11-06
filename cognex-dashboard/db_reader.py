@@ -189,10 +189,12 @@ async def get_filtered_trades(
         params.append(_pfx[index.upper()] + "%")
 
     where = " AND ".join(conditions)
+    _tc = {r["name"] for r in await _query(db_path, "PRAGMA table_info(trades)")}
+    _x = "".join(", " + c for c in ("signal_id", "sl_price", "target_price") if c in _tc)
     return await _query(
         db_path,
         f"""SELECT id, symbol, direction, quantity, entry_price, exit_price,
-                   entry_time, exit_time, pnl_rs, status, strategy_used, mode, reason
+                   entry_time, exit_time, pnl_rs, status, strategy_used, mode, reason{_x}
             FROM trades
             WHERE {where}
             ORDER BY entry_time DESC LIMIT ?""",

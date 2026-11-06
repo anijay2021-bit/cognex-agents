@@ -326,7 +326,7 @@ select.si{text-align:left;width:160px;cursor:pointer}
   <!-- Table -->
   <div class="card" style="padding:0;overflow:hidden">
     <table>
-      <thead><tr><th>Symbol</th><th>Direction</th><th>Strategy</th><th>Entry ₹</th><th>Target ₹</th><th>Exit ₹</th><th>Qty</th><th>P&L ₹</th><th>Status</th><th>Mode</th><th>Entry time</th><th>Exit time</th></tr></thead>
+      <thead id="tr-head"><tr><th>Symbol</th><th>Direction</th><th>Strategy</th><th>Entry ₹</th><th>Target ₹</th><th>Exit ₹</th><th>Qty</th><th>P&L ₹</th><th>Status</th><th>Mode</th><th>Entry time</th><th>Exit time</th></tr></thead>
       <tbody id="tr-body"><tr><td colspan="12" class="es">Select filters and click Search</td></tr></tbody>
     </table>
   </div>
@@ -419,7 +419,7 @@ async function applyFilters(){
   const status=document.getElementById('f-status').value;
   const idx=document.getElementById('f-index').value;
   const body=document.getElementById('tr-body');
-  body.innerHTML='<tr><td colspan="12" class="es">Loading...</td></tr>';
+  body.innerHTML='<tr><td colspan="12" class="es">Loading...</td></tr>';setHead(G.tt==='vwap');
   try{
     let url=`${API}/api/data/filtered?`;
     if(from)url+=`date_from=${from}&`;
@@ -443,6 +443,7 @@ async function applyFilters(){
     const pe=document.getElementById('fs-pnl');
     if(pe){pe.textContent=(pnl>=0?'+':'')+'₹'+Math.abs(Math.round(pnl)).toLocaleString('en-IN');pe.className='pnl-val '+(pnl>0?'cg':pnl<0?'cr':'cgr');}
     if(!trades.length){body.innerHTML='<tr><td colspan="12" class="es">No trades found for this filter</td></tr>';return;}
+    if(G.tt==='vwap'){body.innerHTML=renderVwap(trades);return;}
     body.innerHTML=trades.map(t=>{
       const pnl=t.pnl_rs||0,dir=(t.direction||'').toUpperCase();
       const ps=pnl?(pnl>0?'+':'')+'₹'+Math.round(pnl).toLocaleString('en-IN'):'—';
@@ -467,6 +468,39 @@ async function applyFilters(){
       </tr>`;
     }).join('');
   }catch(e){body.innerHTML=`<tr><td colspan="12" class="es" style="color:#ef4444">Error: ${e.message}</td></tr>`;}
+}
+function setHead(v){const h=document.getElementById('tr-head');if(!h)return;if(!G.head0)G.head0=h.innerHTML;
+  h.innerHTML=v?'<tr><th>Symbol</th><th>Direction</th><th>Strategy</th><th>Entry ₹</th><th>T1 ₹</th><th>T2 ₹</th><th>T3 ₹</th><th>Exit ₹ (T1 / T2 / T3)</th><th>Qty</th><th>P&L ₹</th><th>Status</th><th>Mode</th><th>Entry time</th><th>Exit time</th></tr>':G.head0;}
+function renderVwap(trades){
+  const g={},order=[];
+  trades.forEach(t=>{
+    const m=String(t.signal_id||'').match(/^(.*)-T([123])$/);
+    const key=m?m[1]:('r'+t.id),leg=m?+m[2]:1;
+    if(!g[key]){g[key]={legs:{},rows:[]};order.push(key);}
+    g[key].rows.push(t);g[key].legs[leg]=t;
+  });
+  const f=v=>v?'₹'+Number(v).toFixed(2):'—';
+  return order.map(k=>{
+    const rows=g[k].rows,a=rows[0],L=n=>g[k].legs[n];
+    const pnl=rows.reduce((s,t)=>s+(t.pnl_rs||0),0),qty=rows.reduce((s,t)=>s+(t.quantity||0),0);
+    const open=rows.some(t=>(t.status||'').toUpperCase()==='OPEN');
+    const st=open?'OPEN':(rows.every(t=>(t.status||'').toUpperCase()==='CLOSED')?'CLOSED':(a.status||'—'));
+    const tc=n=>{const t=L(n);if(!t)return'<td>—</td>';const hit=t.exit_price&&String(t.reason||'').toUpperCase().includes('TARGET');return'<td style="color:#2563eb">'+f(t.target_price)+(hit?' ✓':'')+'</td>';};
+    const ex=[1,2,3].map(n=>{const t=L(n);return t&&t.exit_price?Number(t.exit_price).toFixed(2):'—';}).join(' / ');
+    const ps=pnl?(pnl>0?'+':'')+'₹'+Math.round(pnl).toLocaleString('en-IN'):'—';
+    const pc=pnl>0?'cg':pnl<0?'cr':'cgr';
+    const dir=(a.direction||'').toUpperCase();
+    const xs=rows.map(t=>t.exit_time||'').filter(x=>x).sort().pop();
+    const et=(a.entry_time||'').slice(0,16).replace('T',' '),xt=(!open&&xs)?xs.slice(0,16).replace('T',' '):'—';
+    return '<tr><td class="ts3" style="font-size:11px">'+(a.symbol||'—').replace('NSE:','')+'</td>'
+      +'<td class="t'+(dir==='BUY'?'bu':'se')+'">'+dir+'</td>'
+      +'<td style="color:#64748b">'+(a.strategy_used||'—')+'</td>'
+      +'<td>₹'+(a.entry_price||0).toFixed(2)+'</td>'+tc(1)+tc(2)+tc(3)
+      +'<td>'+ex+'</td><td style="color:#94a3b8">'+qty+'</td><td class="'+pc+'">'+ps+'</td>'
+      +'<td><span class="bge b'+(st[0]||'p').toLowerCase()+'">'+st+'</span></td>'
+      +'<td><span class="bge bpa">'+(a.mode||'PAPER')+'</span></td>'
+      +'<td style="color:#94a3b8;font-size:11px">'+et+'</td><td style="color:#94a3b8;font-size:11px">'+xt+'</td></tr>';
+  }).join('');
 }
 function set(id,v){const e=document.getElementById(id);if(e)e.textContent=v;}
 
