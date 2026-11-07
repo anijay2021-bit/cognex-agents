@@ -30,6 +30,11 @@ def _stocks18_trades(date_from, date_to, status, strategy, index):
         q += " AND substr(signal_time,1,10)>=?"; a.append(date_from)
     if date_to:
         q += " AND substr(signal_time,1,10)<=?"; a.append(date_to)
+        import datetime as _dt
+        _s18_today = (_dt.datetime.utcnow() + _dt.timedelta(hours=5, minutes=30)).date().isoformat()
+        q += " AND (exit_time IS NULL OR substr(exit_time,1,10)<=?)"; a.append(date_to)
+        if date_to < _s18_today:
+            q += " AND status<>'OPEN'"
     if status and status.upper() != "ALL":
         q += " AND upper(status)=?"; a.append(status.upper())
     q += " ORDER BY id DESC LIMIT 1000"
