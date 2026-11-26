@@ -108,6 +108,12 @@ async def filtered_trades(
             result["stocks18"] = _stocks18_trades(date_from, date_to, status, strategy, index)
         except Exception as e:
             result["stocks18"] = {"trades": [], "summary": {}, "error": str(e)}
+    if not agent or agent == "straddle":
+        try:
+            from routers.straddle import trades as _sd_trades
+            result["straddle"] = _sd_trades(date_from, date_to, status, strategy, index)
+        except Exception as e:
+            result["straddle"] = {"trades": [], "summary": {}, "error": str(e)}
     return result
 
 

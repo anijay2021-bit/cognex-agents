@@ -10,14 +10,8 @@ How it works:
   5. Agent reads TRADING_MODE on startup and routes orders accordingly
 
 Groups:
-  prajnan_ema      → prajnan-agent  (EMA+OBV strategy)
-  prajnan_calendar → prajnan-agent  (Calendar Spread strategy)
   trishul          → trishul-agent  (Trishul Mean Reversion)
 
-NOTE: prajnan-agent runs multiple strategies. Setting prajnan_ema OR
-prajnan_calendar to LIVE will set the whole prajnan-agent to LIVE.
-The strategy-level granularity requires a small agent code change — see
-/api/live/agent-instructions for the exact 3 lines to add.
 """
 
 import json, os, subprocess, re
@@ -31,27 +25,6 @@ BASE       = "/home/anijay2021"
 MODES_FILE = f"{BASE}/cognex-dashboard/live_modes.json"
 
 GROUPS = {
-    "prajnan_ema": {
-        "label":    "Prajñān — EMA+OBV",
-        "agent":    "prajnan-agent",
-        "service":  "prajnan-agent",
-        "env_file": f"{BASE}/prajnan-agent/.env",
-        "env_key":  "TRADING_MODE",
-    },
-    "prajnan_calendar": {
-        "label":    "Prajñān — Calendar Spread",
-        "agent":    "prajnan-agent",
-        "service":  "prajnan-agent",
-        "env_file": f"{BASE}/prajnan-agent/.env",
-        "env_key":  "TRADING_MODE",
-    },
-    "trishul": {
-        "label":    "Trishul — Mean Reversion",
-        "agent":    "trishul-agent",
-        "service":  "trishul-agent",
-        "env_file": f"{BASE}/trishul-agent/.env",
-        "env_key":  "TRADING_MODE",
-    },
 }
 
 
@@ -183,52 +156,3 @@ async def go_paper(group: str):
         "timestamp": datetime.now().isoformat(),
     }
 
-
-@router.get("/agent-instructions")
-def agent_instructions():
-    """
-    Returns the exact code change needed in each agent to support
-    per-strategy live mode from this dashboard.
-    """
-    return {
-        "summary": "Add 6 lines to each strategy's scan function to read live_modes.json",
-        "modes_file": MODES_FILE,
-        "changes_needed": [
-            {
-                "agent":    "prajnan-agent",
-                "file":     "~/prajnan-agent/strategies/ema_obv_scanner.py",
-                "group_key": "prajnan_ema",
-                "add_at_top": """
-import json as _json, os as _os
-def _get_mode():
-    try: return _json.loads(open('/home/anijay2021/cognex-dashboard/live_modes.json').read()).get('prajnan_ema','PAPER')
-    except: return 'PAPER'
-""",
-                "change": "Replace `mode = settings.trading_mode` with `mode = _get_mode()`",
-            },
-            {
-                "agent":    "prajnan-agent",
-                "file":     "~/prajnan-agent/strategies/calendar_spread_strategy.py",
-                "group_key": "prajnan_calendar",
-                "add_at_top": """
-import json as _json
-def _get_mode():
-    try: return _json.loads(open('/home/anijay2021/cognex-dashboard/live_modes.json').read()).get('prajnan_calendar','PAPER')
-    except: return 'PAPER'
-""",
-                "change": "Replace `mode = settings.trading_mode` with `mode = _get_mode()`",
-            },
-            {
-                "agent":    "trishul-agent",
-                "file":     "~/trishul-agent/main.py",
-                "group_key": "trishul",
-                "add_at_top": """
-import json as _json
-def _get_mode():
-    try: return _json.loads(open('/home/anijay2021/cognex-dashboard/live_modes.json').read()).get('trishul','PAPER')
-    except: return 'PAPER'
-""",
-                "change": "Replace any hardcoded 'PAPER' mode check with `_get_mode()`",
-            },
-        ],
-    }

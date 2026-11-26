@@ -9,26 +9,6 @@ import os
 BASE = "/home/anijay2021"
 
 AGENTS = {
-    "prajnan_calendar": {
-        "display_name": "Prajnan Calendar Agent",
-        "account":      "Kiran - r14592",
-        "service":      "prajnan-calendar-agent",
-        "db":           None,
-        "log":          f"{BASE}/prajnan-calendar-agent/logs/calendar_spread.log",
-        "strategies":   ["Calendar Spread"],
-        "broker_data":  "Fyers",
-        "broker_exec":  "Fyers",
-    },
-    "nitin": {
-        "display_name": "Nitin Agent",
-        "account":      "Kiran - r14592",
-        "service":      "nitin-agent",
-        "db":           f"{BASE}/nitin-agent/cognex_agent.db",
-        "log":          f"{BASE}/nitin-agent/logs/nitin.log",
-        "strategies":   ["Nitin Swing (Flag/Base/DTL/VCP)"],
-        "broker_data":  "Fyers",
-        "broker_exec":  "Paper",
-    },
     "sma18": {
         "display_name": "18SMA",
         "account":      "Kiran - r14592",
@@ -59,15 +39,15 @@ AGENTS = {
         "broker_data":  "Angel One",
         "broker_exec":  "Alerts",
     },
-    "pocketpivot": {
-        "display_name": "Pocket Pivot",
-        "account":      "Kiran - alerts only",
-        "service":      "pocket-pivot-agent",
+    "straddle": {
+        "display_name": "Straddle Agent",
+        "account":      "Kiran - Angel One",
+        "service":      "straddle-agent",
         "db":           None,
-        "log":          f"{BASE}/pocket-pivot-agent/logs/pocket_pivot.log",
-        "strategies":   ["Pocket Pivot (Chartink scan -> Telegram)"],
-        "broker_data":  "Chartink",
-        "broker_exec":  "Alerts",
+        "log":          None,
+        "strategies":   ["Nifty weekly/monthly straddle (Max Loss 3L)"],
+        "broker_data":  "Angel One",
+        "broker_exec":  "Paper",
     },
 }
 

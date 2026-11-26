@@ -189,7 +189,7 @@ select.si{text-align:left;width:160px;cursor:pointer}
 </div>
 
 <div class="hdr">
-  <div class="logo"><div class="li">⚡</div><div><div class="lt">COGNEX Dashboard</div><div class="ls">Prajñān · Prajñān2 · Nitin · Calendar Agent + Pocket Pivot</div></div></div>
+  <div class="logo"><div class="li">⚡</div><div><div class="lt">COGNEX Dashboard</div><div class="ls">18SMA · VWAP · 18SMA-Stocks</div></div></div>
   <div class="hr2">
     <div class="live-banner" id="live-banner">🔴 LIVE TRADING ACTIVE</div>
     <div class="mp">📋 PAPER MODE</div>
@@ -225,26 +225,16 @@ select.si{text-align:left;width:160px;cursor:pointer}
 
   <!-- Agent Cards -->
   <div class="ar">
-    <div class="ac" id="card-nitin">
-      <div class="atp"><div><div class="an">Nitin</div><div class="as2">Kiran - r14592 - Swing (PAPER)</div></div><div class="sp unknown" id="pill-nitin"><div class="spd"></div><span>-</span></div></div>
-      <div class="asts"><div class="ast"><div class="al">Today P&L</div><div class="av" id="av-pnl-nitin">-</div></div><div class="ast"><div class="al">Trades</div><div class="av cb" id="av-tr-nitin">-</div></div></div>
-      <div class="abt"><div class="ab start" onclick="act('nitin','start')">Start</div><div class="ab stop" onclick="act('nitin','stop')">Stop</div><div class="ab restart" onclick="act('nitin','restart')">Restart</div></div>
-      <div class="live-strats"><div class="live-row"><span class="live-name">Flag / Base / DTL / VCP</span><span style="font-size:10px;color:#94a3b8">PAPER</span></div></div>
-    </div>
     <div class="ac" id="card-stocks18">
       <div class="atp"><div><div class="an">18SMA-Stocks</div><div class="as2">F&amp;O stocks - 15m 18 SMA alerts (Angel One)</div></div><div class="sp unknown" id="pill-stocks18"><div class="spd"></div><span>-</span></div></div>
       <div class="asts"><div class="ast"><div class="al">Scans</div><div class="av" style="font-size:11px;color:#64748b">every 15 min</div></div><div class="ast"><div class="al">Signals</div><div class="av" style="font-size:11px"><a href="/stocks18.html" target="_blank">View signals</a> &middot; settings in Settings tab</div></div></div>
       <div class="abt"><div class="ab start" onclick="act('stocks18','start')">Start</div><div class="ab stop" onclick="act('stocks18','stop')">Stop</div><div class="ab restart" onclick="act('stocks18','restart')">Restart</div></div>
     </div>
-    <div class="ac" id="card-pocketpivot">
-      <div class="atp"><div><div class="an">Pocket Pivot</div><div class="as2">Chartink screener - Telegram alerts</div></div><div class="sp unknown" id="pill-pocketpivot"><div class="spd"></div><span>-</span></div></div>
-      <div class="asts"><div class="ast"><div class="al">Scans</div><div class="av" style="font-size:11px;color:#64748b">every 60s</div></div><div class="ast"><div class="al">Window</div><div class="av" style="font-size:11px;color:#64748b">09:15-15:29</div></div></div>
-      <div class="abt"><div class="ab start" onclick="act('pocketpivot','start')">Start</div><div class="ab stop" onclick="act('pocketpivot','stop')">Stop</div><div class="ab restart" onclick="act('pocketpivot','restart')">Restart</div></div>
-    </div>
-    <div class="ac" id="card-prajnan_calendar">
-      <div class="atp"><div><div class="an">Prajnan Calendar Agent</div><div class="as2">Kiran — Fyers (standalone)</div></div><div class="sp unknown" id="pill-prajnan_calendar"><div class="spd"></div><span>—</span></div></div>
-      <div class="abt"><div class="ab start" onclick="act('prajnan_calendar','start')">Start</div><div class="ab stop" onclick="act('prajnan_calendar','stop')">Stop</div><div class="ab restart" onclick="act('prajnan_calendar','restart')">Restart</div></div>
-      <div class="live-strats"><div class="live-row"><span class="live-name">Calendar Spread</span><button class="live-btn paper" id="lb-prajnan_calendar" onclick="confirmLive('prajnan_calendar','Prajnan Calendar Agent — Calendar Spread')">PAPER</button></div></div>
+    <div class="ac" id="card-straddle">
+      <div class="atp"><div><div class="an">Straddle Agent</div><div class="as2">Nifty weekly/monthly straddle - Angel One (<span id="sd-mode">PAPER</span>)</div></div><div class="sp unknown" id="pill-straddle"><div class="spd"></div><span>-</span></div></div>
+      <div class="asts"><div class="ast"><div class="al">Cycle P&amp;L</div><div class="av" id="sd-pnl">-</div></div><div class="ast"><div class="al">Cycle</div><div class="av" style="font-size:11px"><span id="sd-cyc">-</span> &middot; <a href="/straddle.html" target="_blank">Details</a></div></div></div>
+      <div class="abt"><div class="ab start" onclick="act('straddle','start')">Start</div><div class="ab stop" onclick="act('straddle','stop')">Stop</div><div class="ab restart" onclick="act('straddle','restart')">Restart</div></div>
+      <script>(function(){async function sd(){try{const d=await (await fetch('/api/straddle/')).json(),s=d.status||{},c=s.cycle,g=i=>document.getElementById(i);g('sd-mode').textContent=s.mode||(d.params||{}).TRADING_MODE||'PAPER';if(c){const v=c.mtm_rs;g('sd-pnl').textContent=v==null?'-':(v<0?'-':'+')+'Rs '+Math.abs(Math.round(v)).toLocaleString('en-IN');g('sd-pnl').style.color=v<0?'#dc2626':'#16a34a';g('sd-cyc').textContent=c.strike+' / '+c.monthly_expiry;}else{g('sd-pnl').textContent='-';g('sd-pnl').style.color='';g('sd-cyc').textContent='Waiting for next monthly';}}catch(e){}}sd();setInterval(sd,15000);})();</script>
     </div>
     <div class="ac" id="card-sma18">
       <div class="atp"><div><div class="an">18SMA</div><div class="as2">Kiran - r14592 - 18 SMA + 2-Candle Breakout (PAPER)</div></div><div class="sp unknown" id="pill-sma18"><div class="spd"></div><span>-</span></div></div>
@@ -287,8 +277,6 @@ select.si{text-align:left;width:160px;cursor:pointer}
         <label style="font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:.3px">Strategy</label>
         <select id="f-strat" class="si" style="width:140px;text-align:left">
           <option value="ALL">All strategies</option>
-          <option value="RSI2">RSI2</option>
-          <option value="EMA_OBV">EMA+OBV</option>
           <option value="CALENDAR">Calendar Spread</option>
           <option value="SUPERTREND_1MIN">Supertrend</option>
         </select>
@@ -310,7 +298,7 @@ select.si{text-align:left;width:160px;cursor:pointer}
         <button onclick="clearFilters()" style="height:32px;padding:0 12px;border-radius:7px;border:1px solid #e2e8f0;background:#f8fafc;color:#64748b;font-size:13px;cursor:pointer">Clear</button>
       </div>
       <div style="margin-left:auto;display:flex;gap:6px">
-        <div class="tt active" id="ttpn" onclick="setTT('nitin',this)">Nitin</div><div class="tt" id="ttp18" onclick="setTT('sma18',this)">18SMA</div><div class="tt" id="ttpv" onclick="setTT('vwap',this)">VWAP</div><div class="tt" id="ttps" onclick="setTT('stocks18',this)">18SMA-Stocks</div>
+        <div class="tt active" id="ttp18" onclick="setTT('sma18',this)">18SMA</div><div class="tt" id="ttpv" onclick="setTT('vwap',this)">VWAP</div><div class="tt" id="ttps" onclick="setTT('stocks18',this)">18SMA-Stocks</div><div class="tt" id="ttpsd" onclick="setTT('straddle',this)">Straddle</div>
       </div>
     </div>
   </div>
@@ -335,7 +323,7 @@ select.si{text-align:left;width:160px;cursor:pointer}
 <!-- LOGS TAB -->
 <div class="tc" id="tab-logs">
   <div class="card lp">
-    <div class="lt2"><div class="ct" style="margin:0">Full Log Stream</div><div style="display:flex;gap:4px"><div class="lfb active" onclick="setF2('all',this)">All</div><div class="lfb" onclick="setF2('nitin',this)">Nitin</div></div></div>
+    <div class="lt2"><div class="ct" style="margin:0">Full Log Stream</div><div style="display:flex;gap:4px"><div class="lfb active" onclick="setF2('all',this)">All</div></div></div>
     <div class="ls2" id="log-s2" style="height:500px"></div>
   </div>
 </div>
@@ -350,7 +338,7 @@ select.si{text-align:left;width:160px;cursor:pointer}
 
 <script>
 const API=`${location.protocol}//${location.host}`,WS=`ws://${location.host}/ws`;
-const G={logs:[],f:'all',f2:'all',tt:'nitin',trades:{},max:400,cfg:{},dirty:{},cfgLoaded:false,liveModes:{},charts:{equity:null,daily:null}};
+const G={logs:[],f:'all',f2:'all',tt:'sma18',trades:{},max:400,cfg:{},dirty:{},cfgLoaded:false,liveModes:{},charts:{equity:null,daily:null}};
 
 function tick(){const d=new Date(Date.now()+19800000);document.getElementById('clk').textContent=d.toISOString().replace('T',' ').slice(0,19)+' IST';}
 tick();setInterval(tick,1000);
@@ -384,8 +372,6 @@ function addLine(sid,m){const s=document.getElementById(sid);if(!s)return;const 
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function setF(f,btn){G.f=f;document.querySelectorAll('#tab-dashboard .lfb').forEach(b=>b.classList.remove('active'));btn.classList.add('active');const s=document.getElementById('log-s');s.innerHTML='';G.logs.filter(m=>f==='all'||f===m.agent).forEach(m=>addLine('log-s',m));s.scrollTop=s.scrollHeight;}
 function setF2(f,btn){G.f2=f;document.querySelectorAll('#tab-logs .lfb').forEach(b=>b.classList.remove('active'));btn.classList.add('active');const s=document.getElementById('log-s2');s.innerHTML='';G.logs.filter(m=>f==='all'||f===m.agent).forEach(m=>addLine('log-s2',m));s.scrollTop=s.scrollHeight;}
-function updR(p,ts){if(!p)return;set('r-spot',p.spot?p.spot.toLocaleString('en-IN',{maximumFractionDigits:0}):'—');set('r-ema',p.ema200?p.ema200.toFixed(1):'—');const r=p.rsi2,el=document.getElementById('r-rsi');if(el){el.textContent=r!==undefined?r.toFixed(2):'—';el.style.color=r<=6?'#16a34a':r>=94?'#ef4444':r<=15||r>=85?'#d97706':'#0f172a';}const bar=document.getElementById('r-bar');if(bar){bar.style.width=Math.min(100,r)+'%';bar.style.background=r<=6?'#16a34a':r>=94?'#ef4444':'#2563eb';}const b=document.getElementById('r-badge');if(b){if(r<=6){b.className='tbdg ts2';b.textContent='⚡ CE SIGNAL';}else if(r>=94){b.className='tbdg ts2';b.textContent='⚡ PE SIGNAL';}else{b.className='tbdg tw';b.textContent='Watching';}}set('r-ts',(ts||'').slice(11,19));}
-function updE(p,ts){if(!p)return;set('e-9',p.ema9?p.ema9.toFixed(1):'—');set('e-21',p.ema21?p.ema21.toFixed(1):'—');set('e-rsi',p.rsi2?p.rsi2.toFixed(2):'—');const el=document.getElementById('e-cross'),b=document.getElementById('e-badge');if(p.crossover){if(el){el.textContent='▲ Bullish';el.style.color='#16a34a';}if(b){b.className='tbdg ts2';b.textContent='⚡ BUY signal';}}else{if(el){el.textContent='▼ No cross';el.style.color='#ef4444';}if(b){b.className='tbdg tn';b.textContent='No cross';}}set('e-ts',(ts||'').slice(11,19));}
 function updSt(d){Object.entries(d||{}).forEach(([id,s])=>{const c=document.getElementById('card-'+id),p=document.getElementById('pill-'+id);if(!c||!p)return;const r=s.running||s.status==='active';c.className='ac '+(r?'running':'stopped');p.className='sp '+(r?'running':s.status==='unknown'?'unknown':'stopped');p.innerHTML=`<div class="spd"></div><span>${r?'Running':s.status||'Stopped'}</span>`;});}
 function updSn(id,d){
   if(!d)return;
@@ -419,7 +405,7 @@ async function applyFilters(){
   const status=document.getElementById('f-status').value;
   const idx=document.getElementById('f-index').value;
   const body=document.getElementById('tr-body');
-  body.innerHTML='<tr><td colspan="12" class="es">Loading...</td></tr>';setHead(G.tt==='vwap');
+  if(!G.sdQuiet)body.innerHTML='<tr><td colspan="12" class="es">Loading...</td></tr>';setHead(G.tt==='vwap');sdHead();
   try{
     let url=`${API}/api/data/filtered?`;
     if(from)url+=`date_from=${from}&`;
@@ -441,9 +427,9 @@ async function applyFilters(){
     set('fs-losses',sum.losses||0);
     const pnl=sum.total_pnl||0;
     const pe=document.getElementById('fs-pnl');
-    if(pe){pe.textContent=(pnl>=0?'+':'')+'₹'+Math.abs(Math.round(pnl)).toLocaleString('en-IN');pe.className='pnl-val '+(pnl>0?'cg':pnl<0?'cr':'cgr');}
+    if(pe){pe.textContent=(pnl>0?'+':pnl<0?'-':'')+'₹'+Math.abs(Math.round(pnl)).toLocaleString('en-IN');pe.className='pnl-val '+(pnl>0?'cg':pnl<0?'cr':'cgr');}
     if(!trades.length){body.innerHTML='<tr><td colspan="12" class="es">No trades found for this filter</td></tr>';return;}
-    if(G.tt==='vwap'){body.innerHTML=renderVwap(trades);return;}
+    if(G.tt==='vwap'){body.innerHTML=renderVwap(trades);return;}if(G.tt==='straddle'){body.innerHTML=renderStraddle(trades,sum);return;}
     body.innerHTML=trades.map(t=>{
       const pnl=t.pnl_rs||0,dir=(t.direction||'').toUpperCase();
       const ps=pnl?(pnl>0?'+':'')+'₹'+Math.round(pnl).toLocaleString('en-IN'):'—';
@@ -502,6 +488,20 @@ function renderVwap(trades){
       +'<td style="color:#94a3b8;font-size:11px">'+et+'</td><td style="color:#94a3b8;font-size:11px">'+xt+'</td></tr>';
   }).join('');
 }
+// -- Straddle agent (patch_straddle2)
+function sdHead(){if(G.tt!=='straddle')return;document.getElementById('tr-head').innerHTML='<tr><th>Leg</th><th>Contract</th><th>Direction</th><th>Qty</th><th>Entry ₹</th><th>Exit / Live ₹</th><th>P&L ₹</th><th>Cumulative ₹</th><th>Status</th><th>Reason</th><th>Entry time</th><th>Exit time</th></tr>';}
+function renderStraddle(trades,sum){
+  const E=s=>String(s==null?'—':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const R=v=>v==null?'—':(v>0?'+':v<0?'-':'')+'₹'+Math.abs(Math.round(v)).toLocaleString('en-IN');
+  const C=v=>v>0?'cg':v<0?'cr':'cgr';const T=x=>x?String(x).slice(0,16).replace('T',' '):'—';const cy=sum.cycle;
+  let h='<tr><td colspan="12" style="background:#f8fafc;font-size:12px;color:#475569">Booked (closed) <b class="'+C(sum.realised_pnl)+'">'+R(sum.realised_pnl)+'</b> &nbsp;·&nbsp; Open positions (live) <b class="'+C(sum.open_pnl)+'">'+R(sum.open_pnl)+'</b> &nbsp;·&nbsp; Total <b class="'+C(sum.total_pnl)+'">'+R(sum.total_pnl)+'</b>'
+    +(cy?' &nbsp;·&nbsp; Running cycle '+E(cy.strike)+' / '+E(cy.monthly_expiry)+': '+R(cy.mtm_rs):'')
+    +(sum.updated?' &nbsp;·&nbsp; live prices as of '+E(String(sum.updated).slice(11,19)):'')+' &nbsp;·&nbsp; <a href="/straddle.html" target="_blank">Monthly P&L &amp; details</a></td></tr>';
+  return h+trades.map(t=>{const o=t.status==='OPEN';
+    const px=o?(t.ltp!=null?'₹'+Number(t.ltp).toFixed(2)+' <span style="color:#94a3b8;font-size:10px">live</span>':'—'):'₹'+Number(t.exit_price).toFixed(2);
+    return '<tr'+(o?' style="background:#fffbeb"':'')+'><td>'+E(t.leg)+'</td><td class="ts3" style="font-size:11px">'+E(t.symbol)+'</td><td class="t'+(t.direction==='BUY'?'bu':'se')+'">'+E(t.direction)+'</td><td style="color:#94a3b8">'+E(t.quantity)+'</td><td>₹'+Number(t.entry_price).toFixed(2)+'</td><td>'+px+'</td><td class="'+C(t.pnl_rs)+'">'+R(t.pnl_rs)+'</td><td class="'+C(t.cum_pnl_rs)+'"><b>'+R(t.cum_pnl_rs)+'</b></td><td><span class="bge b'+(o?'o':'c')+'">'+E(t.status)+'</span></td><td style="color:#64748b;font-size:11px">'+E(t.reason)+'</td><td style="color:#94a3b8;font-size:11px">'+T(t.entry_time)+'</td><td style="color:#94a3b8;font-size:11px">'+T(t.exit_time)+'</td></tr>';}).join('');
+}
+setInterval(async()=>{const b=document.getElementById('tr-body');if(G.tt==='straddle'&&b&&b.offsetParent!==null){G.sdQuiet=true;try{await applyFilters();}finally{G.sdQuiet=false;}}},15000);
 function set(id,v){const e=document.getElementById(id);if(e)e.textContent=v;}
 
 // ── P&L Charts ──────────────────────────────────────────────────────────────
@@ -607,16 +607,11 @@ async function toggleLive(group,action){
 
 // ── Settings ─────────────────────────────────────────────────────────────────
 const GROUPS=[
-  {id:'prajnan_cal',label:'Prajñān — Calendar Spread'},
-  {id:'nitin',label:'Nitin - Swing Setups'},
-  {id:'pocketpivot',label:'Pocket Pivot - Screener'},
-  {id:'sma18',label:'18SMA — Breakout Strategy'},{id:'stocks18',label:'18SMA-Stocks'},{id:'vwap',label:'VWAP — Mean Reversion'},
+  {id:'sma18',label:'18SMA — Breakout Strategy'},{id:'stocks18',label:'18SMA-Stocks'},{id:'vwap',label:'VWAP — Mean Reversion'},{id:'straddle',label:'Straddle Agent'},
 ];
 const GMAP={
-  prajnan_cal:['c_lots','c_sl_candle','c_flip_sl','c_max_flips','c_roll_exit','c_roll_entry','c_monthly_exit','c_skip_resell','c_hedge','c_hedge_ce','c_hedge_pe','c_daily_loss'],
-  nitin:['n_mode','n_capital','n_risk_pct','n_max_alloc','n_max_stop','n_max_positions','n_min_turnover','n_scan_time','n_monitor_min','n_signal_valid'],
-  pocketpivot:['pp_scan_from','pp_no_scan_after','pp_interval'],
   stocks18:['s18s_scan_enabled','s18s_product','s18s_lots','s18s_min_price','s18s_signal_mode','s18s_tgt_mode','s18s_tgt_value','s18s_sl_mode','s18s_sl_value','s18s_scan_until','s18s_squareoff'],
+  straddle:['sd_lots','sd_entry','sd_roll','sd_min_days','sd_buy_sl','sd_max_loss'],
   sma18:['s18_timeframe','s18_sl_mode','s18_sl_value','s18_target_mode','s18_target_value','s18_daily_loss','s18_nifty_lots','s18_nifty_lot_size','s18_banknifty_lots','s18_banknifty_lot_size','s18_sensex_lots','s18_sensex_lot_size'],vwap:['vwap_timeframe','vwap_sl_buffer','vwap_daily_loss','vwap_nifty_lots','vwap_nifty_lot_size','vwap_banknifty_lots','vwap_banknifty_lot_size','vwap_sensex_lots','vwap_sensex_lot_size'],
 };
 

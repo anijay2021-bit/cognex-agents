@@ -53,6 +53,8 @@ app.include_router(trades_router, prefix="/api/data",   tags=["Data"])
 app.include_router(config_router, prefix="/api/config", tags=["Config"])
 from routers.stocks18 import router as stocks18_router
 app.include_router(stocks18_router, prefix="/api/stocks18", tags=["18SMA-Stocks"])
+from routers.straddle import router as straddle_router
+app.include_router(straddle_router, prefix="/api/straddle", tags=["Straddle"])
 app.include_router(live_router,   prefix="/api/live",   tags=["Live Mode"])
 
 @app.get("/api/health")

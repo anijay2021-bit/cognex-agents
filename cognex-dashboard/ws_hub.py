@@ -111,35 +111,6 @@ async def tail_agent_log(agent_id: str, log_path: str):
             pass
 
 
-async def tail_trishul_journal():
-    try:
-        proc = await asyncio.create_subprocess_exec(
-            "journalctl", "-u", "trishul-agent", "-f", "--no-pager", "-o", "short-iso",
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.DEVNULL,
-        )
-        while True:
-            line = await proc.stdout.readline()
-            if not line:
-                await asyncio.sleep(1)
-                continue
-            raw = line.decode("utf-8", errors="replace").strip()
-            msg_match = raw.split("]: ", 1)
-            msg = msg_match[1] if len(msg_match) > 1 else raw
-            await hub.broadcast({
-                "type": "log_line",
-                "agent": "trishul",
-                "timestamp": _now(),
-                "level": "INFO",
-                "module": "systemd",
-                "message": msg,
-                "raw": raw,
-                "parsed": {},
-                "event": "system_event" if "systemd" in raw else None,
-            })
-    except Exception:
-        pass
-
 
 async def broadcast_agent_statuses():
     while True:
@@ -203,7 +174,6 @@ async def start_background_tasks():
         if log_path:
             asyncio.create_task(tail_agent_log(agent_id, log_path))
 
-    asyncio.create_task(tail_trishul_journal())
     asyncio.create_task(broadcast_agent_statuses())
     asyncio.create_task(broadcast_db_snapshots())
 
