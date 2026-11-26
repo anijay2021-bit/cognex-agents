@@ -14,15 +14,15 @@ DB_PATH         = BASE / "cognex_agent.db"
 LOG_DIR         = BASE / "logs"
 
 # ---- Strategy: 18 SMA + 2-candle breakout (dashboard-controlled) ----
-TIMEFRAME    = 30         # minutes: 1,3,5,10,15,30,60 - same timeframe drives both SMA and candles
+TIMEFRAME    = 15         # minutes: 1,3,5,10,15,30,60 - same timeframe drives both SMA and candles
 SMA_PERIOD   = 18
 
-SL_MODE      = "PERCENT" # "POINTS" | "PERCENT"
-SL_VALUE     = 30.0     # meaning depends on SL_MODE (points, or % of option price)
-TARGET_MODE  = "PERCENT"      # "RR" | "POINTS" | "PERCENT"
-TARGET_VALUE = 30.0       # meaning depends on TARGET_MODE
+SL_MODE      = "POINTS" # "POINTS" | "PERCENT"
+SL_VALUE     = 40.0     # meaning depends on SL_MODE (points, or % of option price)
+TARGET_MODE  = "POINTS"      # "RR" | "POINTS" | "PERCENT"
+TARGET_VALUE = 200.0       # meaning depends on TARGET_MODE
 
-DAILY_LOSS_LIMIT = 20000.0
+DAILY_LOSS_LIMIT = 100000
 
 # ---- Instruments (dashboard-controlled per-instrument lots/lot size) ----
 NIFTY_INDEX      = "NSE:NIFTY50-INDEX"
