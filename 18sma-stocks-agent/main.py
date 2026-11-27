@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """18SMA-Stocks agent.
 
-Scans NSE F&O stocks on the 15-min timeframe (Angel One data). When a 15-min candle
+Scans NSE F&O stocks on the DAILY timeframe (Angel One data), once a day at DAILY_SCAN_AT (15:25 IST,
+using the day's near-final candle). When the daily candle
 closes above / below its 18 SMA it sends a Telegram alert for the ATM CALL / PUT with
 option price, target and stop-loss, then tracks that signal (paper) until TGT / SL /
 square-off. Settings live in settings.json and are edited from the COGNEX dashboard.
@@ -17,7 +18,8 @@ STATUS_FILE = os.path.join(BASE, "status.json")
 CSV_FILE = os.path.join(BASE, "fno_lot_sizes.csv")
 INST_FILE = os.path.join(BASE, "instruments.json")
 MASTER_URL = "https://margincalculator.angelbroking.com/OpenAPI_File/files/OpenAPIScripMaster.json"
-TF = dt.timedelta(minutes=15)
+TF = dt.timedelta(days=1)          # daily candles
+DAILY_SCAN_AT = dt.time(15, 25)    # the single daily scan (IST): today's candle is ~final, option entry before close
 MAX_SPREAD_PCT = 5.0     # skip option if (ask - bid) is wider than this % of ask ...
 MAX_SPREAD_ABS = 0.10    # ... unless the spread is only this many Rs (2 ticks) or less
 
@@ -252,7 +254,7 @@ class Angel:
 
     def candles(self, token, frm, to):
         d = self.post("/rest/secure/angelbroking/historical/v1/getCandleData",
-                      {"exchange": "NSE", "symboltoken": str(token), "interval": "FIFTEEN_MINUTE",
+                      {"exchange": "NSE", "symboltoken": str(token), "interval": "ONE_DAY",
                        "fromdate": frm.strftime("%Y-%m-%d %H:%M"), "todate": to.strftime("%Y-%m-%d %H:%M")})
         return d or []
 
@@ -461,7 +463,7 @@ def fmt_signal(sig, opt, entry, tgt, sl, S):
 def scan(A, b, S):
     t0 = time.time()
     P = S["sma_period"]
-    frm = (b - dt.timedelta(days=4)).replace(hour=9, minute=15, second=0, microsecond=0)
+    frm = (b - dt.timedelta(days=P * 2 + 20)).replace(hour=0, minute=0, second=0, microsecond=0)
     found, ok, skip = [], 0, 0
     for sym, tok in STATE["eligible"]:
         rows = A.candles(tok, frm, b)
@@ -471,8 +473,8 @@ def scan(A, b, S):
                 cl.append((dt.datetime.fromisoformat(r[0]).astimezone(IST), float(r[4])))
             except Exception:
                 continue
-        cl = [(t, c) for t, c in cl if t + TF <= b + dt.timedelta(seconds=1)]
-        if len(cl) < P + 1 or cl[-1][0] != b - TF:
+        cl = [(t, c) for t, c in cl if t.date() <= b.date()]
+        if len(cl) < P + 1 or cl[-1][0].date() != b.date():      # need today's (forming) daily candle
             skip += 1
             continue
         ok += 1
@@ -486,11 +488,11 @@ def scan(A, b, S):
         else:
             up, dn = c1 > s1, c1 < s1
         if up or dn:
-            found.append({"sym": sym, "dir": "CALL" if up else "PUT", "close": c1, "sma": s1, "ts": cl[-1][0] + TF})
+            found.append({"sym": sym, "dir": "CALL" if up else "PUT", "close": c1, "sma": s1, "ts": b})
     msgs = process_signals(A, found, S)
     if ok == 0 and STATE["warned_nodata"] != b.date():
         STATE["warned_nodata"] = b.date()
-        tg("18SMA-Stocks: no fresh 15-min candles for any stock at %s (market holiday or Angel One data issue)." % b.strftime("%H:%M"))
+        tg("18SMA-Stocks: no fresh daily candles for any stock at %s (market holiday or Angel One data issue)." % b.strftime("%H:%M"))
     if msgs:
         send_alerts(msgs)
     dur = round(time.time() - t0)
@@ -589,9 +591,8 @@ def fin(o, price, now, reason):
 
 # ----------------------------------------------------------------------------- main loop
 def last_boundary(now):
-    b = now.replace(minute=now.minute // 15 * 15, second=0, microsecond=0)
-    lo, hi = now.replace(hour=9, minute=30, second=0, microsecond=0), now.replace(hour=15, minute=30, second=0, microsecond=0)
-    return b if lo <= b <= hi else None
+    b = now.replace(hour=DAILY_SCAN_AT.hour, minute=DAILY_SCAN_AT.minute, second=0, microsecond=0)
+    return b if now >= b else None      # one scan per day at DAILY_SCAN_AT
 
 
 def main():
@@ -612,7 +613,7 @@ def main():
         sys.exit(1)
     A = Angel(ENV)
     log.info("18SMA-Stocks agent started")
-    tg("18SMA-Stocks agent started (15-min 18 SMA scan on NSE F&O stocks).")
+    tg("18SMA-Stocks agent started (daily 18 SMA scan at 15:25 IST on NSE F&O stocks).")
     last_mon = 0.0
     while True:
         try:
